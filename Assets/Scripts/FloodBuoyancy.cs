@@ -26,14 +26,14 @@ public class FloodBuoyancy : MonoBehaviour
     {
         if (!isFlooding) return;
 
-        // 1. Move water plane and expand trigger upward over time
+        
         if (transform.position.y < maxHeight)
         {
             float deltaY = riseSpeed * Time.deltaTime;
             transform.Translate(Vector3.up * deltaY, Space.World);
             currentWaterY = transform.position.y;
 
-            // Expand collider bounds downward so floating objects stay inside the trigger volume
+            
             Vector3 size = triggerVolume.size;
             size.y += deltaY;
             triggerVolume.size = size;
@@ -58,7 +58,7 @@ public class FloodBuoyancy : MonoBehaviour
 
     if (submergedDepth > 0)
         {
-        float forceMagnitude = Mathf.Clamp(submergedDepth * fluidDensity * rb.mass, 0f, maxBuoyantForce * rb.mass);
+        float forceMagnitude = Mathf.Clamp(submergedDepth * fluidDensity, 0f, maxBuoyantForce);
         rb.AddForce(Vector3.up * forceMagnitude, ForceMode.Force);
 
         Vector3 velocity = rb.linearVelocity;
