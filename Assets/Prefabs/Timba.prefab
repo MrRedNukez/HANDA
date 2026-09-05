@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7290173226565287044}
   - component: {fileID: 4614530812677396066}
   m_Layer: 0
-  m_Name: Tumba
+  m_Name: Timba
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -135,7 +135,8 @@ PrefabInstance:
       value: TumbaModel
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: -520456302682684671, guid: 0d9c2469472134440b36ef45d06b73f0, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0d9c2469472134440b36ef45d06b73f0, type: 3}
