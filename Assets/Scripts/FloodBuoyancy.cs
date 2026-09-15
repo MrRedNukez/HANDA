@@ -5,7 +5,7 @@ public class FloodBuoyancy : MonoBehaviour
 {
     [Header("Flood Setup")]
     public float riseSpeed = 0.3f;
-    public float maxHeight = 3.0f;
+    public float maxHeight = 5.0f;
     public bool isFlooding = false;
 
     [Header("Buoyancy Settings")]
@@ -13,58 +13,54 @@ public class FloodBuoyancy : MonoBehaviour
     public float maxBuoyantForce = 25f;
 
     private BoxCollider triggerVolume;
-    private float currentWaterY;
+    private float startY;
 
     private void Awake()
     {
         triggerVolume = GetComponent<BoxCollider>();
         triggerVolume.isTrigger = true;
-        currentWaterY = transform.position.y;
+        startY = transform.position.y;
     }
 
     private void Update()
     {
         if (!isFlooding) return;
 
-        
         if (transform.position.y < maxHeight)
         {
             float deltaY = riseSpeed * Time.deltaTime;
             transform.Translate(Vector3.up * deltaY, Space.World);
-            currentWaterY = transform.position.y;
-
-            
-            Vector3 size = triggerVolume.size;
-            size.y += deltaY;
-            triggerVolume.size = size;
-
-            Vector3 center = triggerVolume.center;
-            center.y -= deltaY * 0.5f;
-            triggerVolume.center = center;
         }
+    }
+
+    public float GetFloodProgress()
+    {
+        return Mathf.Clamp01((transform.position.y - startY) / (maxHeight - startY));
+    }
+
+    public float GetCurrentHeight()
+    {
+        return transform.position.y;
     }
 
     private void OnTriggerStay(Collider other)
     {
-    Rigidbody rb = other.attachedRigidbody;
+        Rigidbody rb = other.attachedRigidbody;
+        if (rb == null || rb.isKinematic) return;
 
-    if (rb == null || rb.isKinematic) return;
-  
-    float waterSurfaceY = triggerVolume.bounds.max.y;
+        float waterSurfaceY = triggerVolume.bounds.max.y;
+        float objectBottomY = other.bounds.min.y;
+        float submergedDepth = waterSurfaceY - objectBottomY;
 
-    float objectBottomY = other.bounds.min.y;
-
-    float submergedDepth = waterSurfaceY - objectBottomY;
-
-    if (submergedDepth > 0)
+        if (submergedDepth > 0)
         {
-        float forceMagnitude = Mathf.Clamp(submergedDepth * fluidDensity, 0f, maxBuoyantForce);
-        rb.AddForce(Vector3.up * forceMagnitude, ForceMode.Force);
+            float forceMagnitude = Mathf.Clamp(submergedDepth * fluidDensity, 0f, maxBuoyantForce);
+            rb.AddForce(Vector3.up * forceMagnitude, ForceMode.Force);
 
-        Vector3 velocity = rb.linearVelocity;
-        velocity.x *= 0.95f;
-        velocity.z *= 0.95f;
-        rb.linearVelocity = velocity;
+            Vector3 velocity = rb.linearVelocity;
+            velocity.x *= 0.95f;
+            velocity.z *= 0.95f;
+            rb.linearVelocity = velocity;
         }
     }
 
