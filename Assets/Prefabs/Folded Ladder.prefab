@@ -1,118 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &355251505950928059
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 858414923093196719}
-  - component: {fileID: 7250217141425131343}
-  - component: {fileID: 7865122048987626649}
-  - component: {fileID: 2268012660412993640}
-  m_Layer: 0
-  m_Name: Unfolded Ladder
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!4 &858414923093196719
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 355251505950928059}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.060641296, y: -0.7075017, z: 0.06116504, w: 0.7014434}
-  m_LocalPosition: {x: 0.32, y: 0.03, z: 0.22}
-  m_LocalScale: {x: 0.84974, y: 0.84974, z: 0.08045405}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2912797918605795277}
-  m_LocalEulerAnglesHint: {x: 9.882, y: -90.493, z: 0}
---- !u!33 &7250217141425131343
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 355251505950928059}
-  m_Mesh: {fileID: -6847853353142866314, guid: 897bef9604c2dcf47bdb4aa30ea69657, type: 3}
---- !u!23 &7865122048987626649
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 355251505950928059}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: -876546973899608171, guid: 897bef9604c2dcf47bdb4aa30ea69657, type: 3}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &2268012660412993640
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 355251505950928059}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -6847853353142866314, guid: 897bef9604c2dcf47bdb4aa30ea69657, type: 3}
 --- !u!1 &483837895246518751
 GameObject:
   m_ObjectHideFlags: 0
@@ -123,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2912797918605795277}
   - component: {fileID: 718638750392564387}
+  - component: {fileID: 4001880519653275793}
   m_Layer: 0
   m_Name: Folded Ladder
   m_TagString: Untagged
@@ -143,7 +31,6 @@ Transform:
   m_LocalScale: {x: 0.33709, y: 0.33709, z: 0.33709}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 858414923093196719}
   - {fileID: 7771416485500227869}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -159,8 +46,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e64a258e53ee8e44903d9cbafd1246c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LadderPickup
-  unfoldedLadderPrefab: {fileID: 1488742910608388538, guid: 3502ccb1eb135ec4ab967f5ff9ca3353, type: 3}
-  isPickedUp: 0
+  inventory: {fileID: 0}
+  interactButton: {fileID: 0}
+  foldedLadderModel: {fileID: 6037215847795677703}
+--- !u!135 &4001880519653275793
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 483837895246518751}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 3.021455
+  m_Center: {x: 0.816105, y: 3.3375504, z: 0}
 --- !u!1 &6037215847795677703
 GameObject:
   m_ObjectHideFlags: 0
@@ -172,7 +81,6 @@ GameObject:
   - component: {fileID: 7771416485500227869}
   - component: {fileID: 8934522987868014664}
   - component: {fileID: 2765508231559225661}
-  - component: {fileID: 37006823279385810}
   m_Layer: 0
   m_Name: Folded Ladder
   m_TagString: Untagged
@@ -252,24 +160,3 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &37006823279385810
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6037215847795677703}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 4.5381336, y: 6.5157523, z: 11.656851}
-  m_Center: {x: -0.6137775, y: 3.1295724, z: -3.4130433}

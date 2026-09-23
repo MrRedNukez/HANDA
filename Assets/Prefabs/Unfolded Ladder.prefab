@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2297613605014727424}
-  - component: {fileID: 7581723214238457071}
   m_Layer: 0
   m_Name: Unfolded Ladder
   m_TagString: Untagged
@@ -34,20 +33,6 @@ Transform:
   - {fileID: 8771298186620410484}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7581723214238457071
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1488742910608388538}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e64a258e53ee8e44903d9cbafd1246c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LadderPickup
-  unfoldedLadderPrefab: {fileID: 1488742910608388538}
-  isPickedUp: 0
 --- !u!1 &2151613900081077297
 GameObject:
   m_ObjectHideFlags: 0
