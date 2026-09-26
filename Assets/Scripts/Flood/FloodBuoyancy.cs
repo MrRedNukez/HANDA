@@ -6,6 +6,8 @@ public class FloodBuoyancy : MonoBehaviour
     [Header("Flood Setup")]
     public float riseSpeed = 0.3f;
     public float maxHeight = 5.0f;
+    
+    [Tooltip("Leave this UNCHECKED. The FloodManager will turn it on.")]
     public bool isFlooding = false;
 
     [Header("Buoyancy Settings")]
@@ -36,11 +38,6 @@ public class FloodBuoyancy : MonoBehaviour
     public float GetFloodProgress()
     {
         return Mathf.Clamp01((transform.position.y - startY) / (maxHeight - startY));
-    }
-
-    public float GetCurrentHeight()
-    {
-        return transform.position.y;
     }
 
     private void OnTriggerStay(Collider other)

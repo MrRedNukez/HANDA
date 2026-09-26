@@ -12,7 +12,7 @@ public class InventoryManager : MonoBehaviour
     public bool hasLadder = false;
 
     private bool hasFlashlightOn = false;
-    private bool playerOwnsFlashlight = false;
+    public bool playerOwnsFlashlight = false;
 
     void Start()
     {

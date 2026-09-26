@@ -8,6 +8,7 @@ public class FuseBoxInteractable : MonoBehaviour
     public GameObject interactButton; 
     public CanvasGroup fuseBoxPanel; 
     public Button closeButton; 
+    
 
     private bool isPlayerNear = false;
 

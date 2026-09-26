@@ -11,11 +11,13 @@ public class FloodManager : MonoBehaviour
     [Header("UI References")]
     public Slider waterSlider;
     public CanvasGroup redAlertGroup;
-    public GameObject deathPanel; 
+    //public GameObject deathPanel; 
 
-    [Header("Physics & Player References")]
+    [Header("Hub Reference")]
+    public SimulationManager simManager;
+
+    [Header("Physics Water Reference")]
     public FloodBuoyancy physicalWater;
-    public Transform playerCamera;
 
     [Header("Time Settings")]
     public float prepTime = 30f;
@@ -25,19 +27,13 @@ public class FloodManager : MonoBehaviour
     public float pulseSpeed = 1f;
     public float alertDuration = 3f;
 
-    [Header("Survival Settings")]
-    public float timeToDrown = 3f;
-
     private float currentPrepTime;
     private float currentAlertTime;
-    private float currentDrownTime; 
 
     void Start()
     {
         Time.timeScale = 1f; 
-
         currentPrepTime = prepTime;
-        currentDrownTime = timeToDrown; 
         
         if (waterSlider != null)
         {
@@ -52,24 +48,18 @@ public class FloodManager : MonoBehaviour
             redAlertGroup.gameObject.SetActive(false);
         }
 
-        if (deathPanel != null)
-        {
-            deathPanel.SetActive(false);
-        }
+        //if (deathPanel != null) deathPanel.SetActive(false);
     }
 
     void Update()
     {
-        switch (currentState)
+        if (currentState == FloodState.Preparation)
         {
-            case FloodState.Preparation:
-                HandlePreparation();
-                break;
-            case FloodState.Flooding:
-                HandleFlooding();
-                break;
-            case FloodState.Ended:
-                break;
+            HandlePreparation();
+        }
+        else if (currentState == FloodState.Flooding)
+        {
+            HandleFlooding();
         }
     }
 
@@ -83,7 +73,7 @@ public class FloodManager : MonoBehaviour
             
             if (physicalWater != null)
             {
-                physicalWater.StartFlood();
+                physicalWater.StartFlood(); 
             }
 
             if (redAlertGroup != null)
@@ -96,10 +86,9 @@ public class FloodManager : MonoBehaviour
 
     private void HandleFlooding()
     {
-        float progress = physicalWater.GetFloodProgress();
-        if (waterSlider != null) 
+        if (waterSlider != null && physicalWater != null) 
         {
-            waterSlider.value = progress * 100f;
+            waterSlider.value = physicalWater.GetFloodProgress() * 100f;
         }
 
         if (redAlertGroup != null && currentAlertTime > 0)
@@ -114,42 +103,33 @@ public class FloodManager : MonoBehaviour
             }
         }
 
-        if (physicalWater.GetCurrentHeight() >= playerCamera.position.y)
-        {
-            currentDrownTime -= Time.deltaTime;
-            
-            if (currentDrownTime <= 0)
-            {
-                currentState = FloodState.Ended;
-                TriggerDrowningDeath();
-                return;
-            }
-        }
-        else
-        {
-            currentDrownTime = timeToDrown;
-        }
-
-        if (progress >= 1f)
+        if (physicalWater != null && physicalWater.GetFloodProgress() >= 1f)
         {
             currentState = FloodState.Ended;
             TriggerSurvival();
         }
     }
 
-    private void TriggerDrowningDeath()
+    public void TriggerDrowningDeath()
     {
+        if (currentState == FloodState.Ended) return;
+
+        currentState = FloodState.Ended;
         Debug.Log("Game Over: Player Drowned!");
         
-        if (deathPanel != null)
-        {
-            deathPanel.SetActive(true);
-            Time.timeScale = 0f; 
-        }
+        // Tell the hub the simulation ended, and they DID NOT survive (false)
+        if (simManager != null) simManager.EndSimulation(false);
     }
 
     private void TriggerSurvival()
     {
+        // Add a safety check here so it doesn't trigger if they already drowned
+        if (currentState == FloodState.Ended) return; 
+        
+        currentState = FloodState.Ended;
         Debug.Log("Simulation Success: Player Survived the flood peak!");
+        
+        // Tell the hub the simulation ended, and they SURVIVED (true)
+        if (simManager != null) simManager.EndSimulation(true);
     }
 }

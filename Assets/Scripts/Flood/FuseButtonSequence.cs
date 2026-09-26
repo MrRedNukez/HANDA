@@ -5,9 +5,6 @@ using System.Collections;
 
 public class FuseBoxButtonSequence : MonoBehaviour
 {
-    // =========================================================
-    // SWITCH BUTTONS
-    // =========================================================
 
     [Header("6 UI Switch Buttons")]
     public Button[] switchButtons = new Button[6];
@@ -15,26 +12,14 @@ public class FuseBoxButtonSequence : MonoBehaviour
     [Header("6 Switch Images")]
     public Image[] switchImages = new Image[6];
 
-
-    // =========================================================
-    // INDICATOR
-    // =========================================================
-
     [Header("Indicator Light")]
     public Image indicatorLight;
-
-
-    // =========================================================
-    // STATUS TEXT
-    // =========================================================
 
     [Header("Status Text")]
     public TMP_Text statusText;
 
-
-    // =========================================================
-    // CORRECT SEQUENCE
-    // =========================================================
+    [Header("Simulation State")]
+    public bool isPowerOff = false;
 
     [Header("Correct Sequence")]
     
@@ -57,48 +42,16 @@ public class FuseBoxButtonSequence : MonoBehaviour
         2
     };
 
-
-    // =========================================================
-    // ACTUAL UNITY LIGHTS
-    // =========================================================
-
     [Header("Actual House Lights")]
-    
-    // Drag the actual Light components here.
-    //
-    // Example:
-    // Living Room Point Light
-    // Kitchen Point Light
-    // Bedroom Point Light
 
     public Light[] gameLights;
 
-
-    // =========================================================
-    // LIGHT ON MODELS
-    // =========================================================
-
     [Header("Light ON Models")]
-    
-    // Drag the Light_ON GameObjects here.
-
     public GameObject[] lightsOn;
 
 
-    // =========================================================
-    // LIGHT OFF MODELS
-    // =========================================================
-
     [Header("Light OFF Models")]
-    
-    // Drag the Light_OFF GameObjects here.
-
     public GameObject[] lightsOff;
-
-
-    // =========================================================
-    // COLORS
-    // =========================================================
 
     [Header("Colors")]
 
@@ -112,34 +65,21 @@ public class FuseBoxButtonSequence : MonoBehaviour
 
     public Color readyColor = Color.yellow;
 
-
-    // =========================================================
-    // RESET SETTINGS
-    // =========================================================
-
     [Header("Wrong Sequence Settings")]
 
     public float wrongResetDelay = 1f;
-
-
-    // =========================================================
-    // INTERNAL VARIABLES
-    // =========================================================
-
     private int currentStep = 0;
-
     private bool puzzleCompleted = false;
-
     private bool isResetting = false;
+    private Color originalAmbientColor;
+    public GameObject vignetteUI;
 
-
-    // =========================================================
-    // START
-    // =========================================================
 
     private void Start()
     {
-        // Connect all six buttons
+        originalAmbientColor = RenderSettings.ambientLight;
+        if (vignetteUI != null) vignetteUI.SetActive(false);
+
         for (int i = 0; i < switchButtons.Length; i++)
         {
             int index = i;
@@ -152,48 +92,31 @@ public class FuseBoxButtonSequence : MonoBehaviour
             }
         }
 
-        // Reset switches
         ResetPuzzle();
 
-        // Set indicator to yellow
         if (indicatorLight != null)
         {
             indicatorLight.color = readyColor;
         }
 
-        // Set starting status
         if (statusText != null)
         {
             statusText.text = "ACTIVATE THE SWITCHES";
         }
 
-        // Make sure house lights start ON
         TurnHouseLightsOn();
     }
 
-
-    // =========================================================
-    // PRESS SWITCH
-    // =========================================================
-
     public void PressSwitch(int index)
     {
-        // Don't allow input after puzzle is completed
         if (puzzleCompleted)
             return;
 
-        // Don't allow input while resetting
         if (isResetting)
             return;
 
-        // Make sure index is valid
         if (index < 0 || index >= switchButtons.Length)
             return;
-
-
-        // =====================================================
-        // CORRECT SWITCH
-        // =====================================================
 
         if (index == correctSequence[currentStep])
         {
@@ -203,16 +126,13 @@ public class FuseBoxButtonSequence : MonoBehaviour
                 switchImages[index].color = onColor;
             }
 
-            // Move to next step
             currentStep++;
 
-            // Green indicator
             if (indicatorLight != null)
             {
                 indicatorLight.color = correctColor;
             }
-
-            // Status
+        
             if (statusText != null)
             {
                 statusText.text = "CORRECT!";
@@ -223,21 +143,11 @@ public class FuseBoxButtonSequence : MonoBehaviour
                 " / " + correctSequence.Length
             );
 
-
-            // =================================================
-            // CHECK IF COMPLETE
-            // =================================================
-
             if (currentStep >= correctSequence.Length)
             {
                 CompletePuzzle();
             }
         }
-
-
-        // =====================================================
-        // WRONG SWITCH
-        // =====================================================
 
         else
         {
@@ -260,22 +170,14 @@ public class FuseBoxButtonSequence : MonoBehaviour
         }
     }
 
-
-    // =========================================================
-    // RESET AFTER WRONG BUTTON
-    // =========================================================
-
     private IEnumerator ResetAfterDelay()
     {
         isResetting = true;
 
-        // Wait
         yield return new WaitForSeconds(wrongResetDelay);
 
-        // Reset switches
         ResetPuzzle();
-
-        // Indicator goes back to yellow
+        
         if (indicatorLight != null)
         {
             indicatorLight.color = readyColor;
@@ -289,11 +191,6 @@ public class FuseBoxButtonSequence : MonoBehaviour
 
         isResetting = false;
     }
-
-
-    // =========================================================
-    // RESET PUZZLE
-    // =========================================================
 
     public void ResetPuzzle()
     {
@@ -311,11 +208,6 @@ public class FuseBoxButtonSequence : MonoBehaviour
         Debug.Log("Switch sequence reset.");
     }
 
-
-    // =========================================================
-    // PUZZLE COMPLETED
-    // =========================================================
-
     private void CompletePuzzle()
     {
         puzzleCompleted = true;
@@ -325,47 +217,27 @@ public class FuseBoxButtonSequence : MonoBehaviour
         Debug.Log("POWERING OFF HOUSE...");
         Debug.Log("=================================");
 
-
-        // =====================================================
-        // GREEN INDICATOR
-        // =====================================================
-
         if (indicatorLight != null)
         {
             indicatorLight.color = correctColor;
         }
-
-
-        // =====================================================
-        // STATUS
-        // =====================================================
 
         if (statusText != null)
         {
             statusText.text = "POWER OFF — COMPLETED!";
         }
 
-
-        // =====================================================
-        // TURN OFF HOUSE LIGHTS
-        // =====================================================
-
         TurnHouseLightsOff();
     }
 
-
-    // =========================================================
-    // TURN HOUSE LIGHTS OFF
-    // =========================================================
-
     private void TurnHouseLightsOff()
     {
+        isPowerOff = true;
+        
         Debug.Log("Turning OFF all house lights...");
 
-
-        // -----------------------------------------------------
-        // Disable actual Unity Lights
-        // -----------------------------------------------------
+        RenderSettings.ambientLight = Color.black;
+        if (vignetteUI != null) vignetteUI.SetActive(true);
 
         foreach (Light lightSource in gameLights)
         {
@@ -375,11 +247,6 @@ public class FuseBoxButtonSequence : MonoBehaviour
             }
         }
 
-
-        // -----------------------------------------------------
-        // Hide ON light models
-        // -----------------------------------------------------
-
         foreach (GameObject lightOn in lightsOn)
         {
             if (lightOn != null)
@@ -388,11 +255,6 @@ public class FuseBoxButtonSequence : MonoBehaviour
             }
         }
 
-
-        // -----------------------------------------------------
-        // Show OFF light models
-        // -----------------------------------------------------
-
         foreach (GameObject lightOff in lightsOff)
         {
             if (lightOff != null)
@@ -400,24 +262,15 @@ public class FuseBoxButtonSequence : MonoBehaviour
                 lightOff.SetActive(true);
             }
         }
+        
 
 
         Debug.Log("All house lights are OFF.");
     }
 
-
-    // =========================================================
-    // TURN HOUSE LIGHTS ON
-    // =========================================================
-
     private void TurnHouseLightsOn()
     {
         Debug.Log("Turning ON all house lights...");
-
-
-        // -----------------------------------------------------
-        // Enable actual Unity Lights
-        // -----------------------------------------------------
 
         foreach (Light lightSource in gameLights)
         {
@@ -427,11 +280,6 @@ public class FuseBoxButtonSequence : MonoBehaviour
             }
         }
 
-
-        // -----------------------------------------------------
-        // Show ON models
-        // -----------------------------------------------------
-
         foreach (GameObject lightOn in lightsOn)
         {
             if (lightOn != null)
@@ -439,11 +287,6 @@ public class FuseBoxButtonSequence : MonoBehaviour
                 lightOn.SetActive(true);
             }
         }
-
-
-        // -----------------------------------------------------
-        // Hide OFF models
-        // -----------------------------------------------------
 
         foreach (GameObject lightOff in lightsOff)
         {
@@ -453,11 +296,6 @@ public class FuseBoxButtonSequence : MonoBehaviour
             }
         }
     }
-
-
-    // =========================================================
-    // MANUAL RESTART
-    // =========================================================
 
     public void RestartPuzzle()
     {
