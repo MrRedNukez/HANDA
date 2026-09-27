@@ -6,7 +6,7 @@ public class SimulationManager : MonoBehaviour
 
     [Header("System References")]
     public ReportManager reportManager;
-    public FuseBoxButtonSequence fuseBox;
+    public FuseButtonSequence fuseBox;
     public InventoryManager inventory;
 
     [Header("Live Data")]

@@ -106,6 +106,7 @@
     <Compile Include="Assets\Scripts\Flood\FloodManager.cs" />
     <Compile Include="Assets\Scripts\Flood\LadderPickup.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\SkewTextExample.cs" />
+    <Compile Include="Assets\Scripts\Flood\LadderEscape.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\WarpTextExample.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TextMeshProFloatingText.cs" />
     <Compile Include="Assets\Scripts\Flood\LadderSpawner.cs" />

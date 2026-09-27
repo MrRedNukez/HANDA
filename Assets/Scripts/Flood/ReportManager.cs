@@ -65,7 +65,7 @@ public class ReportManager : MonoBehaviour
             reportPanel.gameObject.SetActive(false);
             
             // CRITICAL: We must use Realtime here since timeScale is 0
-            yield return new WaitForSecondsRealtime(3.0f); 
+            yield return new WaitForSecondsRealtime(5.0f); 
             
             quotePanel.gameObject.SetActive(false);
         }
