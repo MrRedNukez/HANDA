@@ -106,7 +106,7 @@ public class ReportManager : MonoBehaviour
             gradeText.color = Color.yellow;
             commentText.text = "Good effort, but a critical safety failure occurred.";
             recommendationText.text = "WARNING: Water + Electricity is deadly. Always find the breaker panel and turn it off immediately.";
-            checklistText.text = "[ ✓ ] Evacuated to high ground\n[ X ] Disabled main power breaker\n" + (flashlightUsed ? "[ ✓ ]" : "[ X ]") + " Utilized emergency lighting";
+            checklistText.text = "[ O ] Evacuated to high ground\n[ X ] Disabled main power breaker\n" + (flashlightUsed ? "[ O ]" : "[ X ]") + " Utilized emergency lighting";
             return;
         }
 
@@ -116,7 +116,7 @@ public class ReportManager : MonoBehaviour
             gradeText.color = Color.green;
             commentText.text = "Strong survival skills, but room to improve visibility.";
             recommendationText.text = "TIP: Moving in absolute darkness leads to injuries. Always locate and equip your flashlight.";
-            checklistText.text = "[ ✓ ] Evacuated to high ground\n[ ✓ ] Disabled main power breaker\n[ X ] Utilized emergency lighting";
+            checklistText.text = "[ O ] Evacuated to high ground\n[ O ] Disabled main power breaker\n[ X ] Utilized emergency lighting";
             return;
         }
 
@@ -124,7 +124,7 @@ public class ReportManager : MonoBehaviour
         gradeText.color = Color.green;
         commentText.text = "Outstanding. You followed all safety protocols.";
         recommendationText.text = "No critical warnings. Simulation passed perfectly.";
-        checklistText.text = "[ ✓ ] Evacuated to high ground\n[ ✓ ] Disabled main power breaker\n[ ✓ ] Utilized emergency lighting";
+        checklistText.text = "[ O ] Evacuated to high ground\n[ O ] Disabled main power breaker\n[ O ] Utilized emergency lighting";
     }
 
     public void NextSlide()
