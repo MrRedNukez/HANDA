@@ -1,9 +1,10 @@
+
 using System.Collections;
 using UnityEngine;
 
 public class PhoneHUDController : MonoBehaviour
 {
-    [Header("Phone")]
+    [Header("Phone Model")]
     public Transform phoneModel;
 
     [Header("Phone Positions")]
@@ -16,270 +17,253 @@ public class PhoneHUDController : MonoBehaviour
     [Header("Phone UI")]
     public GameObject homeScreen;
     public GameObject floodApp;
+    public GameObject phoneToggleButton;
 
-    [Header("Phone Screen")]
+    [Header("Phone Screen Materials")]
     public Renderer phoneScreenRenderer;
     public Material screenOffMaterial;
     public Material screenOnMaterial;
 
-    [Header("Settings")]
-    public bool startClosed = true;
-
     private bool phoneOpen = false;
     private bool isMoving = false;
 
+    private Coroutine movementCoroutine;
+
     private void Start()
     {
-        Debug.Log("PhoneHUDController started.");
-
-        if (startClosed)
-        {
-            phoneOpen = false;
-
-            SetPhonePosition(bottomRightPosition);
-            SetScreen(false);
-
-            if (homeScreen != null)
-                homeScreen.SetActive(false);
-
-            if (floodApp != null)
-                floodApp.SetActive(false);
-        }
-    }
-
-    private void Update()
-    {
-        // Test with mouse in Unity Editor
-        if (Input.GetMouseButtonDown(0))
-        {
-            Debug.Log("Mouse click detected.");
-
-            TryOpenPhone(Input.mousePosition);
-        }
-
-        // Mobile touch
-        if (Input.touchCount > 0)
-        {
-            Touch touch = Input.GetTouch(0);
-
-            if (touch.phase == TouchPhase.Began)
-            {
-                Debug.Log("Touch detected.");
-
-                TryOpenPhone(touch.position);
-            }
-        }
-    }
-
-    private void TryOpenPhone(Vector2 screenPosition)
-    {
-        if (phoneOpen)
-        {
-            Debug.Log("Phone is already open.");
+        if (!ReferencesAssigned())
             return;
-        }
 
+        // Start with the phone hidden.
+        phoneModel.gameObject.SetActive(false);
+
+        // Show the external phone toggle button.
+        if (phoneToggleButton != null)
+            phoneToggleButton.SetActive(true);
+
+        // Hide the phone's internal screens.
+        if (homeScreen != null)
+            homeScreen.SetActive(false);
+
+        if (floodApp != null)
+            floodApp.SetActive(false);
+
+        SetScreen(false);
+    }
+
+    // Connect the external UI button to this method.
+    public void TogglePhone()
+    {
         if (isMoving)
-        {
-            Debug.Log("Phone is currently moving.");
             return;
-        }
 
-        if (phoneModel == null)
-        {
-            Debug.LogError("Phone Model is NOT assigned!");
-            return;
-        }
-
-        if (openPosition == null)
-        {
-            Debug.LogError("Open Position is NOT assigned!");
-            return;
-        }
-
-        Camera cam = Camera.main;
-
-        if (cam == null)
-        {
-            Debug.LogError("No Main Camera found!");
-            return;
-        }
-
-        Ray ray = cam.ScreenPointToRay(screenPosition);
-
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit, 100f))
-        {
-            Debug.Log("Raycast hit: " + hit.transform.name);
-
-            Transform hitObject = hit.transform;
-
-            // Check if we clicked the phone or any child of the phone
-            if (hitObject == phoneModel ||
-                hitObject.IsChildOf(phoneModel))
-            {
-                Debug.Log("PHONE CLICKED!");
-
-                OpenPhone();
-            }
-            else
-            {
-                Debug.Log("Something else was clicked: " + hitObject.name);
-            }
-        }
+        if (phoneOpen)
+            ClosePhone();
         else
-        {
-            Debug.Log("Raycast did NOT hit anything.");
-        }
+            OpenPhone();
     }
+
+    // =====================================================
+    // OPEN PHONE
+    // =====================================================
 
     public void OpenPhone()
     {
         if (phoneOpen || isMoving)
             return;
 
-        Debug.Log("Opening phone...");
+        if (!ReferencesAssigned())
+            return;
 
         phoneOpen = true;
 
-        SetScreen(true);
+        // Hide the external toggle button.
+        if (phoneToggleButton != null)
+            phoneToggleButton.SetActive(false);
 
+        // Show the phone at the bottom-right position.
+        phoneModel.gameObject.SetActive(true);
+
+        phoneModel.localPosition =
+            bottomRightPosition.localPosition;
+
+        phoneModel.localRotation =
+            bottomRightPosition.localRotation;
+
+        // Show the home screen.
         if (homeScreen != null)
             homeScreen.SetActive(true);
+
+        // Keep the Flood Safety app closed initially.
+        if (floodApp != null)
+            floodApp.SetActive(false);
+
+        // Turn the phone screen on.
+        SetScreen(true);
+
+        // Animate the phone to the open position.
+        movementCoroutine = StartCoroutine(
+            MovePhone(openPosition, false)
+        );
+    }
+
+    // =====================================================
+    // CLOSE PHONE
+    // =====================================================
+
+    public void ClosePhone()
+    {
+        if (!phoneOpen || isMoving)
+            return;
+
+        if (!ReferencesAssigned())
+            return;
+
+        // Hide the internal phone screens.
+        if (homeScreen != null)
+            homeScreen.SetActive(false);
 
         if (floodApp != null)
             floodApp.SetActive(false);
 
-        StartCoroutine(MovePhone(openPosition));
+        // Move the phone back, then hide it.
+        movementCoroutine = StartCoroutine(
+            MovePhone(bottomRightPosition, true)
+        );
     }
 
-    public void ClosePhone()
-{
-    if (phoneModel == null)
+    // =====================================================
+    // PHONE MOVEMENT
+    // =====================================================
+
+    private IEnumerator MovePhone(
+        Transform target,
+        bool hideAfterMovement)
     {
-        Debug.LogError("PhoneModel is not assigned!");
-        return;
-    }
-
-    if (bottomRightPosition == null)
-    {
-        Debug.LogError("BottomRightPosition is not assigned!");
-        return;
-    }
-
-    // Move phone directly back to the bottom-right position
-    phoneModel.position = bottomRightPosition.position;
-    phoneModel.rotation = bottomRightPosition.rotation;
-
-    // Turn phone screen off
-    SetScreen(false);
-
-    // Hide phone UI
-    if (homeScreen != null)
-        homeScreen.SetActive(false);
-
-    if (floodApp != null)
-        floodApp.SetActive(false);
-
-    // Mark phone as closed
-    phoneOpen = false;
-
-    Debug.Log("Phone returned to BottomRightPosition.");
-}
-
-    private IEnumerator ClosePhoneAnimation()
-    {
-        yield return StartCoroutine(MovePhone(bottomRightPosition));
-
-        SetScreen(false);
-    }
-
-    private IEnumerator MovePhone(Transform target)
-    {
-        if (target == null)
+        if (target == null || phoneModel == null)
         {
-            Debug.LogError("MovePhone target is NULL!");
-            yield break;
-        }
+            Debug.LogError(
+                "PhoneHUDController: Movement target or phone is missing."
+            );
 
-        if (phoneModel == null)
-        {
-            Debug.LogError("Phone Model is NULL!");
+            isMoving = false;
             yield break;
         }
 
         isMoving = true;
 
-        Vector3 startPosition = phoneModel.position;
-        Quaternion startRotation = phoneModel.rotation;
+        Vector3 startPosition = phoneModel.localPosition;
+        Quaternion startRotation = phoneModel.localRotation;
 
+        // Convert the target marker's world transform into
+        // the phone model's parent's local coordinate space.
+        Transform parent = phoneModel.parent;
+
+        Vector3 targetPosition = parent != null
+            ? parent.InverseTransformPoint(target.position)
+            : target.position;
+
+        Quaternion targetRotation = parent != null
+            ? Quaternion.Inverse(parent.rotation) * target.rotation
+            : target.rotation;
+
+        float duration = Mathf.Max(0.01f, moveDuration);
         float elapsed = 0f;
 
-        while (elapsed < moveDuration)
+        while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
 
-            float t = elapsed / moveDuration;
-
+            float t = Mathf.Clamp01(elapsed / duration);
             t = Mathf.SmoothStep(0f, 1f, t);
 
-            phoneModel.position =
-                Vector3.Lerp(
-                    startPosition,
-                    target.position,
-                    t
-                );
+            phoneModel.localPosition = Vector3.Lerp(
+                startPosition,
+                targetPosition,
+                t
+            );
 
-            phoneModel.rotation =
-                Quaternion.Slerp(
-                    startRotation,
-                    target.rotation,
-                    t
-                );
+            phoneModel.localRotation = Quaternion.Slerp(
+                startRotation,
+                targetRotation,
+                t
+            );
 
             yield return null;
         }
 
-        phoneModel.position = target.position;
-        phoneModel.rotation = target.rotation;
+        // Ensure the phone reaches the exact target.
+        phoneModel.localPosition = targetPosition;
+        phoneModel.localRotation = targetRotation;
+
+        if (hideAfterMovement)
+        {
+            // Turn the screen off.
+            SetScreen(false);
+
+            // Hide the entire phone.
+            phoneModel.gameObject.SetActive(false);
+
+            phoneOpen = false;
+
+            // Show the external toggle button again.
+            if (phoneToggleButton != null)
+                phoneToggleButton.SetActive(true);
+        }
 
         isMoving = false;
-
-        Debug.Log("Phone movement finished.");
+        movementCoroutine = null;
     }
 
-    private void SetPhonePosition(Transform target)
+    // =====================================================
+    // VALIDATE REFERENCES
+    // =====================================================
+
+    private bool ReferencesAssigned()
     {
-        if (phoneModel == null || target == null)
+        if (phoneModel == null)
         {
             Debug.LogError(
-                "Cannot set phone position. " +
-                "Phone Model or target is missing."
+                "PhoneHUDController: Phone Model is not assigned."
             );
-
-            return;
+            return false;
         }
 
-        phoneModel.position = target.position;
-        phoneModel.rotation = target.rotation;
+        if (bottomRightPosition == null)
+        {
+            Debug.LogError(
+                "PhoneHUDController: Bottom Right Position is not assigned."
+            );
+            return false;
+        }
+
+        if (openPosition == null)
+        {
+            Debug.LogError(
+                "PhoneHUDController: Open Position is not assigned."
+            );
+            return false;
+        }
+
+        return true;
     }
 
-    private void SetScreen(bool on)
+    // =====================================================
+    // PHONE SCREEN MATERIAL
+    // =====================================================
+
+    private void SetScreen(bool screenOn)
     {
         if (phoneScreenRenderer == null)
-        {
-            Debug.LogWarning("Phone Screen Renderer is not assigned.");
             return;
-        }
 
-        if (on && screenOnMaterial != null)
+        Material targetMaterial = screenOn
+            ? screenOnMaterial
+            : screenOffMaterial;
+
+        if (targetMaterial != null)
         {
-            phoneScreenRenderer.material = screenOnMaterial;
-        }
-        else if (!on && screenOffMaterial != null)
-        {
-            phoneScreenRenderer.material = screenOffMaterial;
+            phoneScreenRenderer.material = targetMaterial;
         }
     }
 }

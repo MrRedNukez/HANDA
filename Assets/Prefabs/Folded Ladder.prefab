@@ -49,6 +49,10 @@ MonoBehaviour:
   inventory: {fileID: 0}
   interactButton: {fileID: 0}
   foldedLadderModel: {fileID: 6037215847795677703}
+  popupPanel: {fileID: 0}
+  popupText: {fileID: 0}
+  popupMessage: I can finally go up to the roof now!
+  popupDuration: 3
 --- !u!135 &4001880519653275793
 SphereCollider:
   m_ObjectHideFlags: 0
