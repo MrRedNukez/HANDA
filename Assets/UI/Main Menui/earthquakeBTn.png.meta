@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 14020ef489390a849be932921015cb95
+guid: 7435bfc260e917f47b20e1f21f047ff4
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8802017846085776307
-    second: playPressed_0
+      213: 6781202097371128581
+    second: earthquakeBTn_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: playPressed_0
+      name: earthquakeBTn_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1858
-        height: 1413
+        width: 1514
+        height: 589
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d4c88617763f8d580800000000000000
-      internalID: -8802017846085776307
+      spriteID: 503a0f3116bab1e50800000000000000
+      internalID: 6781202097371128581
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      playPressed_0: -8802017846085776307
+      earthquakeBTn_0: 6781202097371128581
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 3cdc60d8fcc9bbf46af68ab9c362fac8
+guid: 768ef2e64b7fcda42a94c0700c7f73ce
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -563803920534274199
-    second: optionsHighlighted_0
+      213: -3783159506859888138
+    second: FloodPic_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: optionsHighlighted_0
+      name: FloodPic_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1536
-        height: 606
+        width: 194
+        height: 138
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 96ff4994257fc28f0800000000000000
-      internalID: -563803920534274199
+      spriteID: 6f179f8f8748f7bc0800000000000000
+      internalID: -3783159506859888138
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      optionsHighlighted_0: -563803920534274199
+      FloodPic_0: -3783159506859888138
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

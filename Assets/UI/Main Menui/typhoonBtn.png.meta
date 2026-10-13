@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 1de8ae535a5612b4184d291d7ab2a3ed
+guid: afc7b60dfc354b4458c8e957dc064bfd
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2448019897410096658
-    second: optionsPressed_0
+      213: -3612206497825435933
+    second: typhoonBtn_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: optionsPressed_0
+      name: typhoonBtn_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1536
-        height: 606
+        width: 1515
+        height: 585
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 21e8734602d19f120800000000000000
-      internalID: 2448019897410096658
+      spriteID: 3eec1c9145ddeddc0800000000000000
+      internalID: -3612206497825435933
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      optionsPressed_0: 2448019897410096658
+      typhoonBtn_0: -3612206497825435933
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

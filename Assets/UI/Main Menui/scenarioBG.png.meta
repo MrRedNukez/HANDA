@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 00dbb02ce99dc634cb810cb24e39aa33
+guid: 63b41b2f124fbde4895600f47d927cec
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1192498516739795788
-    second: ExitHighlighlighted_0
+      213: 8430904083421804794
+    second: scenarioBG_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ExitHighlighlighted_0
+      name: scenarioBG_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 1864
-        height: 1414
+        width: 1074
+        height: 599
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4b45b8acae4637fe0800000000000000
-      internalID: -1192498516739795788
+      spriteID: af83fb35896900570800000000000000
+      internalID: 8430904083421804794
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ExitHighlighlighted_0: -1192498516739795788
+      scenarioBG_0: 8430904083421804794
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
