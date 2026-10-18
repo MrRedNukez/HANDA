@@ -1,4 +1,3 @@
-
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -7,20 +6,14 @@ using UnityEngine.UI;
 
 public class GasTankMinigame : MonoBehaviour
 {
-    [Header("Player")]
-    public Transform player;
-    public float interactionDistance = 3f;
-    public Behaviour[] movementScriptsToDisable;
+    [Header("Player Interaction")]
+    public PlayerMovement playerMovementScript;
+    public PlayerCamera playerCameraScript;
 
-    [Header("Camera Lock")]
-    public Behaviour[] cameraLookScriptsToDisable;
-    public Transform cameraTransform;
-    public Transform playerBody;
-
-    private Quaternion savedCameraRotation;
-    private Quaternion savedPlayerBodyRotation;
-    private bool cameraRotationSaved;
-
+    [Header("Explosion Penalty")]
+    public EarthquakeTimer timerSystem;
+    public float explosionRadius = 7f;
+    
     [Header("UI")]
     public Button openButton;
     public GameObject gasTankPanel;
@@ -30,14 +23,8 @@ public class GasTankMinigame : MonoBehaviour
     [Header("Valve")]
     public RectTransform valveVisual;
     public Slider valveProgressSlider;
-
-    [Tooltip("Degrees required to close the valve. For example, 540 = 1.5 turns.")]
     public float degreesToCloseValve = 540f;
-
-    [Tooltip("Minimum pointer distance from the valve center.")]
     public float minValvePointerRadius = 10f;
-
-    [Tooltip("Enable this to close by clockwise rotation.")]
     public bool clockwiseClosesValve = true;
 
     [Header("Hose")]
@@ -45,16 +32,22 @@ public class GasTankMinigame : MonoBehaviour
     public Slider hoseProgressSlider;
     public Vector2 hosePullOffset = new Vector2(180f, 0f);
     public float hoseDragDistance = 300f;
+    
+    [Tooltip("How fast the hose snaps back to the tank if you let go early.")]
+    public float hoseSnapBackSpeed = 3f; 
 
     [Header("Completion")]
     public UnityEvent onGasSafetyCompleted;
+
+    // --- NEW: GRADING HOOK ---
+    [Tooltip("Becomes true when completed. ReportManager will read this.")]
+    public bool hasSecuredGas { get; private set; }
 
     private bool panelOpen;
     private bool completed;
     private bool turningValve;
     private bool pullingHose;
 
-    // Signed accumulated rotation: positive and negative directions differ.
     private float valveAngle;
     private float valveProgress;
     private float hoseProgress;
@@ -64,39 +57,20 @@ public class GasTankMinigame : MonoBehaviour
 
     private Quaternion valveStartRotation;
     private Vector2 hoseStartPosition;
-
-    private bool[] savedMovementStates;
-    private bool[] savedCameraStates;
-
+    
+    
     private CursorLockMode previousCursorLockState;
     private bool previousCursorVisible;
     private Coroutine completionRoutine;
+    private bool playerInRange = false;
 
-    public bool IsPanelOpen => panelOpen;
-
-    // Only the required direction can close the valve.
-    public bool IsValveClosed =>
-        clockwiseClosesValve
-            ? valveAngle >= degreesToCloseValve
-            : valveAngle <= -degreesToCloseValve;
-
+    public bool IsValveClosed => clockwiseClosesValve ? valveAngle >= degreesToCloseValve : valveAngle <= -degreesToCloseValve;
     public bool IsHoseRemoved => hoseProgress >= 0.999f;
 
     private void Awake()
     {
-        if (valveVisual != null)
-            valveStartRotation = valveVisual.localRotation;
-
-        if (hoseConnector != null)
-            hoseStartPosition = hoseConnector.anchoredPosition;
-
-        if (movementScriptsToDisable != null)
-            savedMovementStates =
-                new bool[movementScriptsToDisable.Length];
-
-        if (cameraLookScriptsToDisable != null)
-            savedCameraStates =
-                new bool[cameraLookScriptsToDisable.Length];
+        if (valveVisual != null) valveStartRotation = valveVisual.localRotation;
+        if (hoseConnector != null) hoseStartPosition = hoseConnector.anchoredPosition;
 
         ConfigureSlider(valveProgressSlider);
         ConfigureSlider(hoseProgressSlider);
@@ -104,77 +78,78 @@ public class GasTankMinigame : MonoBehaviour
 
     private void Start()
     {
-        if (gasTankPanel != null)
-            gasTankPanel.SetActive(false);
-
+        if (gasTankPanel != null) gasTankPanel.SetActive(false);
         if (openButton != null)
         {
             openButton.onClick.AddListener(OpenPanel);
             openButton.gameObject.SetActive(false);
         }
-
-        if (closeButton != null)
-            closeButton.onClick.AddListener(ClosePanel);
+        if (closeButton != null) closeButton.onClick.AddListener(ClosePanel);
 
         UpdateValveVisual();
         UpdateHoseVisual();
         UpdateSliders();
-
         SetStatus("Rotate the valve clockwise to close the gas.");
     }
 
-    private void ConfigureSlider(Slider slider)
+    private void OnTriggerEnter(Collider other)
     {
-        if (slider == null)
-            return;
+        if (other.CompareTag("Player") && !completed)
+        {
+            playerInRange = true;
+            
+            // FIX: Only show the button if the earthquake HAS NOT started
+            if (!panelOpen && openButton != null && !EarthquakeTimer.IsEarthquakeActive) 
+            {
+                openButton.gameObject.SetActive(true);
+            }
+        }
+    }
 
-        slider.minValue = 0f;
-        slider.maxValue = 1f;
-        slider.wholeNumbers = false;
-        slider.interactable = false;
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            playerInRange = false;
+            if (openButton != null) openButton.gameObject.SetActive(false);
+            
+            if (panelOpen) ClosePanel(); 
+        }
     }
 
     private void Update()
     {
-        if (player == null)
-            return;
-
-        if (!panelOpen && !completed)
+        if (EarthquakeTimer.IsEarthquakeActive)
         {
-            bool canInteract =
-                Vector3.Distance(player.position, transform.position)
-                <= interactionDistance;
+            if (panelOpen) ClosePanel();
 
-            if (openButton != null &&
-                openButton.gameObject.activeSelf != canInteract)
+            if (openButton != null && openButton.gameObject.activeSelf) 
             {
-                openButton.gameObject.SetActive(canInteract);
+                openButton.gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            if (playerInRange && !completed && !panelOpen && openButton != null && !openButton.gameObject.activeSelf)
+            {
+                openButton.gameObject.SetActive(true);
             }
         }
 
-        if (panelOpen && cameraRotationSaved)
+        // --- 3. HOSE SNAP-BACK TENSION ---
+        if (!pullingHose && hoseProgress > 0f && hoseProgress < 1f && IsValveClosed)
         {
-            if (cameraTransform != null)
-                cameraTransform.rotation = savedCameraRotation;
-
-            if (playerBody != null)
-                playerBody.rotation = savedPlayerBodyRotation;
+            hoseProgress -= Time.deltaTime * hoseSnapBackSpeed;
+            hoseProgress = Mathf.Clamp01(hoseProgress);
+            UpdateHoseVisual();
+            UpdateSliders();
         }
     }
 
     // ---------------- PANEL ----------------
-
     public void OpenPanel()
     {
-        if (completed || panelOpen ||
-            player == null || gasTankPanel == null)
-            return;
-
-        if (Vector3.Distance(player.position, transform.position)
-            > interactionDistance)
-            return;
-
-        LockCameraRotation();
+        if (completed || panelOpen || gasTankPanel == null) return;
 
         previousCursorLockState = Cursor.lockState;
         previousCursorVisible = Cursor.visible;
@@ -182,17 +157,12 @@ public class GasTankMinigame : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        SaveAndDisableScripts(
-            movementScriptsToDisable, savedMovementStates);
-
-        SaveAndDisableScripts(
-            cameraLookScriptsToDisable, savedCameraStates);
+        if (playerMovementScript != null) playerMovementScript.canMove = false;
+        if (playerCameraScript != null) playerCameraScript.canLook = false;
 
         panelOpen = true;
         gasTankPanel.SetActive(true);
-
-        if (openButton != null)
-            openButton.gameObject.SetActive(false);
+        if (openButton != null) openButton.gameObject.SetActive(false);
 
         UpdateSliders();
         UpdateValveVisual();
@@ -202,106 +172,59 @@ public class GasTankMinigame : MonoBehaviour
 
     public void ClosePanel()
     {
-        if (!panelOpen)
-            return;
+        if (!panelOpen) return;
 
         panelOpen = false;
         turningValve = false;
         pullingHose = false;
         hasPreviousPointerAngle = false;
 
-        if (gasTankPanel != null)
-            gasTankPanel.SetActive(false);
+        if (gasTankPanel != null) gasTankPanel.SetActive(false);
 
-        RestoreCameraRotation();
-
-        RestoreScripts(
-            movementScriptsToDisable, savedMovementStates);
-
-        RestoreScripts(
-            cameraLookScriptsToDisable, savedCameraStates);
+        if (playerMovementScript != null) playerMovementScript.canMove = true;
+        if (playerCameraScript != null) playerCameraScript.canLook = true;
 
         Cursor.lockState = previousCursorLockState;
         Cursor.visible = previousCursorVisible;
-    }
 
-    private void LockCameraRotation()
-    {
-        if (cameraTransform != null)
-            savedCameraRotation = cameraTransform.rotation;
-
-        if (playerBody != null)
-            savedPlayerBodyRotation = playerBody.rotation;
-
-        cameraRotationSaved = true;
-    }
-
-    private void RestoreCameraRotation()
-    {
-        if (!cameraRotationSaved)
-            return;
-
-        if (cameraTransform != null)
-            cameraTransform.rotation = savedCameraRotation;
-
-        if (playerBody != null)
-            playerBody.rotation = savedPlayerBodyRotation;
-
-        cameraRotationSaved = false;
+        // Give them the open button back if they are still standing near it and the quake hasn't started
+        if (playerInRange && !completed && openButton != null && !EarthquakeTimer.IsEarthquakeActive)
+        {
+            openButton.gameObject.SetActive(true);
+        }
     }
 
     // ---------------- VALVE ROTATION ----------------
-
     public bool BeginValveTurn(Vector2 pointerPosition)
     {
-        if (!panelOpen || completed || IsHoseRemoved ||
-            valveVisual == null)
-            return false;
-
+        if (!panelOpen || completed || IsHoseRemoved || valveVisual == null) return false;
         turningValve = true;
         hasPreviousPointerAngle = false;
-
         UpdatePointerAngle(pointerPosition, true);
-
-        SetStatus(
-            clockwiseClosesValve
-                ? "Rotate clockwise to close the valve."
-                : "Rotate counterclockwise to close the valve.");
-
         return true;
     }
 
     public void DragValve(Vector2 pointerPosition)
     {
-        if (!panelOpen || !turningValve || completed ||
-            valveVisual == null)
-            return;
-
+        if (!panelOpen || !turningValve || completed || valveVisual == null) return;
         UpdatePointerAngle(pointerPosition, false);
     }
 
-    private void UpdatePointerAngle(
-        Vector2 pointerPosition, bool initialize)
+    private void UpdatePointerAngle(Vector2 pointerPosition, bool initialize)
     {
         Camera uiCamera = null;
         Canvas canvas = valveVisual.GetComponentInParent<Canvas>();
-
-        if (canvas != null &&
-            canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
         {
             uiCamera = canvas.worldCamera;
         }
 
-        Vector2 center = RectTransformUtility.WorldToScreenPoint(
-            uiCamera, valveVisual.position);
-
+        Vector2 center = RectTransformUtility.WorldToScreenPoint(uiCamera, valveVisual.position);
         Vector2 direction = pointerPosition - center;
 
-        if (direction.magnitude < minValvePointerRadius)
-            return;
+        if (direction.magnitude < minValvePointerRadius) return;
 
-        float currentPointerAngle =
-            Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        float currentPointerAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
         if (initialize || !hasPreviousPointerAngle)
         {
@@ -310,102 +233,52 @@ public class GasTankMinigame : MonoBehaviour
             return;
         }
 
-        float deltaAngle = Mathf.DeltaAngle(
-            previousPointerAngle, currentPointerAngle);
-
+        float deltaAngle = Mathf.DeltaAngle(previousPointerAngle, currentPointerAngle);
         previousPointerAngle = currentPointerAngle;
 
-        // Unity UI coordinates: positive angular movement is counterclockwise.
-        // Invert the sign when clockwise should close the valve.
         float closingDirection = clockwiseClosesValve ? -1f : 1f;
-
         valveAngle += deltaAngle * closingDirection;
-
-        // Clamp at fully open. The player must rotate in the closing
-        // direction to increase progress.
         valveAngle = Mathf.Max(0f, valveAngle);
 
-        valveProgress = Mathf.Clamp01(
-            valveAngle / Mathf.Max(1f, degreesToCloseValve));
+        valveProgress = Mathf.Clamp01(valveAngle / Mathf.Max(1f, degreesToCloseValve));
 
         UpdateValveVisual();
         UpdateSliders();
 
-        if (IsValveClosed)
-        {
-            SetStatus("VALVE CLOSED! Now disconnect the hose.");
-        }
-        else if (valveAngle <= 0f)
-        {
-            SetStatus(
-                clockwiseClosesValve
-                    ? "Valve open. Rotate clockwise to close it."
-                    : "Valve open. Rotate counterclockwise to close it.");
-        }
-        else
-        {
-            SetStatus(
-                clockwiseClosesValve
-                    ? "Keep rotating clockwise. Reverse to reopen."
-                    : "Keep rotating counterclockwise. Reverse to reopen.");
-        }
+        if (IsValveClosed) SetStatus("VALVE CLOSED! Now disconnect the hose.");
+        else if (valveAngle <= 0f) SetStatus(clockwiseClosesValve ? "Valve open. Rotate clockwise to close it." : "Valve open. Rotate counterclockwise to close it.");
+        else SetStatus(clockwiseClosesValve ? "Keep rotating clockwise. Reverse to reopen." : "Keep rotating counterclockwise. Reverse to reopen.");
     }
 
-    public void EndValveTurn()
-    {
-        turningValve = false;
-        hasPreviousPointerAngle = false;
+    public void EndValveTurn() 
+    { 
+        turningValve = false; 
+        hasPreviousPointerAngle = false; 
     }
 
     private void UpdateValveVisual()
     {
-        if (valveVisual == null)
-            return;
-
-        float visualAngle = clockwiseClosesValve
-            ? -valveAngle
-            : valveAngle;
-
-        valveVisual.localRotation =
-            valveStartRotation *
-            Quaternion.Euler(0f, 0f, visualAngle);
+        if (valveVisual == null) return;
+        float visualAngle = clockwiseClosesValve ? -valveAngle : valveAngle;
+        valveVisual.localRotation = valveStartRotation * Quaternion.Euler(0f, 0f, visualAngle);
     }
 
     // ---------------- HOSE ----------------
-
     public bool BeginHosePull()
     {
-        if (!panelOpen || completed || IsHoseRemoved)
-            return false;
-
-        if (!IsValveClosed)
-        {
-            SetStatus("Close the gas valve before removing the hose!");
-            return false;
-        }
-
+        if (!panelOpen || completed || IsHoseRemoved) return false;
+        if (!IsValveClosed) { SetStatus("Close the gas valve before removing the hose!"); return false; }
         pullingHose = true;
         SetStatus("Pull the hose connector away from the tank.");
-
         return true;
     }
 
     public void DragHose(float horizontalDelta)
     {
-        if (!panelOpen || !pullingHose || completed)
-            return;
+        if (!panelOpen || !pullingHose || completed) return;
+        if (!IsValveClosed) { pullingHose = false; SetStatus("Close the gas valve before removing the hose!"); return; }
 
-        if (!IsValveClosed)
-        {
-            pullingHose = false;
-            SetStatus("Close the gas valve before removing the hose!");
-            return;
-        }
-
-        hoseProgress = Mathf.Clamp01(
-            hoseProgress +
-            horizontalDelta / Mathf.Max(1f, hoseDragDistance));
-
+        hoseProgress = Mathf.Clamp01(hoseProgress + horizontalDelta / Mathf.Max(1f, hoseDragDistance));
         UpdateHoseVisual();
         UpdateSliders();
 
@@ -413,128 +286,86 @@ public class GasTankMinigame : MonoBehaviour
         {
             pullingHose = false;
             SetStatus("GAS SAFETY COMPLETE!");
-
-            if (completionRoutine == null)
-                completionRoutine = StartCoroutine(CompleteRoutine());
+            if (completionRoutine == null) completionRoutine = StartCoroutine(CompleteRoutine());
         }
-        else
-        {
-            SetStatus("Pull the hose connector away from the tank.");
-        }
+        else SetStatus("Pull the hose connector away from the tank.");
     }
 
-    public void EndHosePull()
-    {
-        pullingHose = false;
+    public void EndHosePull() 
+    { 
+        pullingHose = false; 
     }
 
     private void UpdateHoseVisual()
     {
-        if (hoseConnector != null)
-        {
-            hoseConnector.anchoredPosition =
-                hoseStartPosition + hosePullOffset * hoseProgress;
-        }
+        if (hoseConnector != null) hoseConnector.anchoredPosition = hoseStartPosition + hosePullOffset * hoseProgress;
     }
 
-    // ---------------- SLIDERS ----------------
+    // ---------------- UTILS ----------------
+    private void ConfigureSlider(Slider slider)
+    {
+        if (slider != null) { slider.minValue = 0f; slider.maxValue = 1f; slider.wholeNumbers = false; slider.interactable = false; }
+    }
 
     private void UpdateSliders()
     {
-        if (valveProgressSlider != null)
-            valveProgressSlider.SetValueWithoutNotify(valveProgress);
-
-        if (hoseProgressSlider != null)
-            hoseProgressSlider.SetValueWithoutNotify(hoseProgress);
+        if (valveProgressSlider != null) valveProgressSlider.SetValueWithoutNotify(valveProgress);
+        if (hoseProgressSlider != null) hoseProgressSlider.SetValueWithoutNotify(hoseProgress);
     }
-
-    // ---------------- COMPLETION ----------------
 
     private IEnumerator CompleteRoutine()
     {
         completed = true;
-
-        if (openButton != null)
-            openButton.gameObject.SetActive(false);
-
+        hasSecuredGas = true; 
+        
+        if (openButton != null) openButton.gameObject.SetActive(false);
         onGasSafetyCompleted?.Invoke();
-
         yield return new WaitForSecondsRealtime(1.5f);
-
         completionRoutine = null;
         ClosePanel();
     }
 
     private void RefreshInstructions()
     {
-        if (!IsValveClosed)
-            SetStatus(
-                clockwiseClosesValve
-                    ? "STEP 1: Rotate clockwise to close the valve."
-                    : "STEP 1: Rotate counterclockwise to close the valve.");
-        else if (!IsHoseRemoved)
-            SetStatus("STEP 2: Pull the hose connector away from the tank.");
-        else
-            SetStatus("Gas safety complete!");
+        if (!IsValveClosed) SetStatus(clockwiseClosesValve ? "STEP 1: Rotate clockwise to close the valve." : "STEP 1: Rotate counterclockwise to close the valve.");
+        else if (!IsHoseRemoved) SetStatus("STEP 2: Pull the hose connector away from the tank.");
+        else SetStatus("Gas safety complete!");
     }
 
-    private void SetStatus(string message)
+    private void SetStatus(string message) { if (statusText != null) statusText.text = message; }
+
+    private void SaveAndDisableScripts(Behaviour[] scripts, bool[] savedStates)
     {
-        if (statusText != null)
-            statusText.text = message;
-    }
-
-    // ---------------- SCRIPT STATE ----------------
-
-    private void SaveAndDisableScripts(
-        Behaviour[] scripts, bool[] savedStates)
-    {
-        if (scripts == null || savedStates == null)
-            return;
-
+        if (scripts == null || savedStates == null) return;
         for (int i = 0; i < scripts.Length; i++)
         {
-            if (scripts[i] == null)
-                continue;
-
+            if (scripts[i] == null) continue;
             savedStates[i] = scripts[i].enabled;
             scripts[i].enabled = false;
         }
     }
 
-    private void RestoreScripts(
-        Behaviour[] scripts, bool[] savedStates)
+    private void RestoreScripts(Behaviour[] scripts, bool[] savedStates)
     {
-        if (scripts == null || savedStates == null)
-            return;
-
+        if (scripts == null || savedStates == null) return;
         for (int i = 0; i < scripts.Length; i++)
         {
-            if (scripts[i] != null)
-                scripts[i].enabled = savedStates[i];
+            if (scripts[i] != null) scripts[i].enabled = savedStates[i];
         }
     }
 
-    private void OnDestroy()
+    public void TriggerAftershockCheck()
     {
-        if (openButton != null)
-            openButton.onClick.RemoveListener(OpenPanel);
+        if (hasSecuredGas) return;
 
-        if (closeButton != null)
-            closeButton.onClick.RemoveListener(ClosePanel);
+        Debug.Log("The aftershock ignited the open gas valve!");
+        // if (explosionEffect != null) explosionEffect.Play();
 
-        if (panelOpen)
+        // Check if the player is caught in the blast radius
+        float distance = Vector3.Distance(transform.position, playerMovementScript.transform.position);
+        if (distance <= explosionRadius)
         {
-            RestoreCameraRotation();
-
-            RestoreScripts(
-                movementScriptsToDisable, savedMovementStates);
-
-            RestoreScripts(
-                cameraLookScriptsToDisable, savedCameraStates);
-
-            Cursor.lockState = previousCursorLockState;
-            Cursor.visible = previousCursorVisible;
+            if (timerSystem != null) timerSystem.TriggerGasExplosion();
         }
     }
 }

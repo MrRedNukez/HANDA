@@ -10,6 +10,9 @@ public class PlayerCamera : MonoBehaviour
     public float minPitch = -80f;
     public float maxPitch = 80f;
 
+    [Header("State")]
+    public bool canLook = true; // NEW: Toggle to pause camera smoothly
+
     private PlayerControls controls;
     private Vector2 lookInput;
     private float xRotation = 0f;
@@ -19,7 +22,6 @@ public class PlayerCamera : MonoBehaviour
     {
         controls = new PlayerControls();
         
-        // Reads both Mouse (PC) and Swipe (Mobile) because of Pointer > Delta
         controls.Gameplay.Look.performed += ctx => lookInput = ctx.ReadValue<Vector2>();
         controls.Gameplay.Look.canceled += ctx => lookInput = Vector2.zero;
     }
@@ -43,7 +45,9 @@ public class PlayerCamera : MonoBehaviour
         }
 #endif
 
-        // Calculate rotation based on input
+        // NEW: Instantly stop calculating camera math if the minigame is open
+        if (!canLook) return; 
+
         float mouseX = lookInput.x * lookSensitivity * Time.deltaTime;
         float mouseY = lookInput.y * lookSensitivity * Time.deltaTime;
 

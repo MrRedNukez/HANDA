@@ -7,6 +7,9 @@ public class EarthquakeManager : MonoBehaviour
     [Header("Hub Link")]
     public SimulationManager simManager;
 
+    [Header("Hazards")]
+    public GasTankMinigame gasTank;
+
     [Header("Target")]
     public Transform house;
 
@@ -142,7 +145,6 @@ public class EarthquakeManager : MonoBehaviour
 
                 CurrentIntensity = Mathf.Lerp(CurrentIntensity, spikeTarget, 1f - Mathf.Exp(-spikeSharpness * dt));
 
-                // DEBRIS SPAWNING LOOP
                 currentDebrisTimer -= dt;
                 if (currentDebrisTimer <= 0f)
                 {
@@ -160,6 +162,10 @@ public class EarthquakeManager : MonoBehaviour
                 
                 if (f >= 1f) 
                 {
+                    // --- NEW: THE SHAKING HAS COMPLETELY STOPPED ---
+                    // This allows the player to fix the Gas Tank and stops them from hiding!
+                    EarthquakeTimer.IsEarthquakeActive = false; 
+
                     if (enableAftershocks && completedAftershocks < aftershocksToTrigger)
                     {
                         phase = Phase.AftershockWait;
@@ -231,7 +237,6 @@ public class EarthquakeManager : MonoBehaviour
         }
     }
 
-    // ---------- Public API ----------
     void BeginRumble()
     {
         phase = Phase.Rumble;
@@ -240,6 +245,10 @@ public class EarthquakeManager : MonoBehaviour
         rumbleDuration = Random.Range(rumbleDurationRange.x, rumbleDurationRange.y);
 
         if (redAlertPanel != null) redAlertPanel.SetActive(true);
+
+        // --- NEW: THE WARNING RUMBLE HAS STARTED ---
+        // This locks the Gas Tank and allows players to dive under tables!
+        EarthquakeTimer.IsEarthquakeActive = true; 
     }
 
     void BeginQuake(bool isAftershock)
@@ -253,15 +262,18 @@ public class EarthquakeManager : MonoBehaviour
         if (isAftershock) PeakIntensity *= aftershockIntensityMultiplier;
         
         spikeTarget = rumbleEndIntensity;
-        
-        // Reset debris timer at the start of a quake
         currentDebrisTimer = Random.Range(spawnIntervalRange.x, spawnIntervalRange.y); 
         
-        // Start the UI Timer if it's the main quake
         if (!isAftershock)
         {
             if (redAlertPanel != null) redAlertPanel.SetActive(false);
             if (timerSystem != null) timerSystem.StartTimer();
+        }
+        else
+        {
+            EarthquakeTimer.IsEarthquakeActive = true;
+
+            if (gasTank != null) gasTank.TriggerAftershockCheck();
         }
     }
 

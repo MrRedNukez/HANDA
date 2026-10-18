@@ -1,13 +1,12 @@
-
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro; 
 
 public class TableHiding : MonoBehaviour
 {
     [Header("Player")]
     public Transform player;
-    public Camera playerCamera;
 
     [Tooltip("Add PlayerMovement here. CharacterController is optional.")]
     public Behaviour[] movementScriptsToDisable;
@@ -20,13 +19,18 @@ public class TableHiding : MonoBehaviour
     [Range(0f, 1f)]
     public float lowerHidingAmount = 0.2f;
 
-    [Header("Interaction")]
-    public float interactionDistance = 3f;
-    public float lookDistance = 5f;
-
     [Header("Shared UI - Reuse for every table")]
     public Button interactionButton;
     public Text buttonLabel;
+
+    [Header("Active Hold System (Desktop & Mobile)")]
+    public GameObject gripUIPanel;           
+    public TextMeshProUGUI gripStatusText;   
+    public KeyCode pcGripKey = KeyCode.Space; 
+    public float gracePeriodBeforeSlip = 0.5f; 
+
+    private bool isPointerHoldingGrip = false; 
+    private float slipTimer = 0f;
 
     [Header("Black Screen")]
     public CanvasGroup blackScreen;
@@ -36,27 +40,25 @@ public class TableHiding : MonoBehaviour
     public bool disablePlayerColliders = true;
     public bool freezePlayerRigidbody = true;
 
+    // --- SIMULATION & GRADING HOOKS ---
+    [Header("Grading Data")]
+    public bool hasSuccessfullyHidden = false; 
+    public static bool IsPlayerHiding { get; private set; } 
+
     private static TableHiding candidateTarget;
     private static TableHiding activeTable;
     private static Button sharedButton;
     private static Text sharedLabel;
 
-    private static int candidateFrame = -1;
     private static int uiUpdatedFrame = -1;
-    private static float candidateDistance;
-    private static bool candidateIsLookedAt;
     private static bool isTransitioning;
-
-    private Collider tableCollider;
 
     private bool isHidden;
     private bool isFading;
 
     private bool[] savedMovementStates;
-
     private Collider[] playerColliders;
     private bool[] savedColliderStates;
-
     private Rigidbody playerRigidbody;
     private bool savedIsKinematic;
     private bool savedUseGravity;
@@ -66,12 +68,9 @@ public class TableHiding : MonoBehaviour
 
     private void Awake()
     {
-        tableCollider = GetComponentInChildren<Collider>();
-
         if (movementScriptsToDisable != null)
         {
-            savedMovementStates =
-                new bool[movementScriptsToDisable.Length];
+            savedMovementStates = new bool[movementScriptsToDisable.Length];
         }
     }
 
@@ -79,18 +78,13 @@ public class TableHiding : MonoBehaviour
     {
         if (player != null)
         {
-            playerColliders =
-                player.GetComponentsInChildren<Collider>(true);
-
-            savedColliderStates =
-                new bool[playerColliders.Length];
-
+            playerColliders = player.GetComponentsInChildren<Collider>(true);
+            savedColliderStates = new bool[playerColliders.Length];
             playerRigidbody = player.GetComponent<Rigidbody>();
 
             if (playerRigidbody == null)
             {
-                playerRigidbody =
-                    player.GetComponentInChildren<Rigidbody>();
+                playerRigidbody = player.GetComponentInChildren<Rigidbody>();
             }
         }
 
@@ -99,12 +93,8 @@ public class TableHiding : MonoBehaviour
             sharedButton = interactionButton;
             sharedLabel = buttonLabel;
 
-            sharedButton.onClick.RemoveListener(
-                HandleSharedButtonClick);
-
-            sharedButton.onClick.AddListener(
-                HandleSharedButtonClick);
-
+            sharedButton.onClick.RemoveListener(HandleSharedButtonClick);
+            sharedButton.onClick.AddListener(HandleSharedButtonClick);
             sharedButton.gameObject.SetActive(false);
         }
 
@@ -114,82 +104,91 @@ public class TableHiding : MonoBehaviour
             blackScreen.blocksRaycasts = false;
             blackScreen.interactable = false;
         }
+
+        if (gripUIPanel != null) gripUIPanel.SetActive(false);
     }
 
     private void Update()
     {
-        if (candidateFrame != Time.frameCount)
+        if (activeTable == this && isHidden && !isTransitioning)
         {
-            candidateFrame = Time.frameCount;
-            candidateTarget = null;
-            candidateDistance = float.MaxValue;
-            candidateIsLookedAt = false;
-        }
-
-        if (activeTable != null || isTransitioning)
-            return;
-
-        if (player == null ||
-            playerCamera == null ||
-            tableCollider == null)
-            return;
-
-        float distance = Vector3.Distance(
-            player.position,
-            tableCollider.ClosestPoint(player.position));
-
-        bool nearTable = distance <= interactionDistance;
-        bool lookingAtTable = IsPlayerLookingAtTable();
-
-        if (!nearTable && !lookingAtTable)
-            return;
-
-        bool shouldReplace =
-            candidateTarget == null ||
-            (lookingAtTable && !candidateIsLookedAt) ||
-            (lookingAtTable == candidateIsLookedAt &&
-             distance < candidateDistance);
-
-        if (shouldReplace)
-        {
-            candidateTarget = this;
-            candidateDistance = distance;
-            candidateIsLookedAt = lookingAtTable;
+            UpdateGripLogic();
         }
     }
 
-    private bool IsPlayerLookingAtTable()
+    // --- GRIP CONTROL LOGIC ---
+    private void UpdateGripLogic()
     {
-        Ray ray = new Ray(
-            playerCamera.transform.position,
-            playerCamera.transform.forward);
+        bool isHoldingInput = Input.GetKey(pcGripKey) || isPointerHoldingGrip;
 
-        if (!Physics.Raycast(
-            ray, out RaycastHit hit, lookDistance))
-            return false;
+        if (isHoldingInput)
+        {
+            slipTimer = 0f;
+            IsPlayerHiding = true; 
 
-        Transform hitTransform = hit.transform;
+            if (gripStatusText != null) 
+            {
+                gripStatusText.text = "HOLDING FIRM!";
+                gripStatusText.color = Color.green;
+            }
+        }
+        else
+        {
+            // IMMEDIATELY change the UI the moment they let go
+            if (gripStatusText != null) 
+            {
+                gripStatusText.text = "SLIPPING! GRIP IT!";
+                gripStatusText.color = Color.red;
+            }
 
-        return hitTransform == transform ||
-               hitTransform.IsChildOf(transform);
+            // Start counting the grace period
+            slipTimer += Time.deltaTime;
+
+            if (slipTimer >= gracePeriodBeforeSlip)
+            {
+                IsPlayerHiding = false; 
+                ExitTable(); // Hides the UI and kicks them out
+            }
+        }
+    }
+
+    public void OnGripPointerDown() => isPointerHoldingGrip = true;
+    public void OnGripPointerUp() => isPointerHoldingGrip = false;
+
+    // --- TRIGGER ZONE INTERACTION ---
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player") && !isTransitioning && activeTable == null)
+        {
+            candidateTarget = this;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player") && candidateTarget == this)
+        {
+            candidateTarget = null;
+        }
     }
 
     private void LateUpdate()
     {
-        if (uiUpdatedFrame == Time.frameCount)
-            return;
-
+        if (uiUpdatedFrame == Time.frameCount) return;
         uiUpdatedFrame = Time.frameCount;
 
-        if (sharedButton == null)
-            return;
+        if (sharedButton == null) return;
 
         bool hiding = activeTable != null;
 
-        TableHiding target = hiding
-            ? activeTable
-            : candidateTarget;
+        // NEW: If they are hiding, hide the shared interact button entirely.
+        if (hiding)
+        {
+            if (sharedButton.gameObject.activeSelf) sharedButton.gameObject.SetActive(false);
+            return;
+        }
 
+        TableHiding target = candidateTarget;
         bool showButton = target != null;
 
         if (sharedButton.gameObject.activeSelf != showButton)
@@ -197,40 +196,28 @@ public class TableHiding : MonoBehaviour
 
         if (sharedLabel != null && showButton)
         {
-            sharedLabel.text = hiding
-                ? "EXIT"
-                : "HIDE UNDER TABLE";
+            sharedLabel.text = "HIDE UNDER TABLE";
         }
 
-        sharedButton.interactable =
-            showButton && !isTransitioning;
+        sharedButton.interactable = showButton && !isTransitioning;
     }
 
     private static void HandleSharedButtonClick()
     {
-        if (isTransitioning)
-            return;
+        if (isTransitioning) return;
 
-        if (activeTable != null)
-        {
-            activeTable.ExitTable();
-            return;
-        }
-
-        if (candidateTarget != null)
+        // Since exiting is now automatic, this button ONLY handles entering.
+        if (activeTable == null && candidateTarget != null)
             candidateTarget.EnterTable();
     }
 
     private void EnterTable()
     {
-        if (isFading ||
-            activeTable != null ||
-            player == null ||
-            hidePoint == null)
-            return;
+        if (isFading || activeTable != null || player == null || hidePoint == null) return;
 
         activeTable = this;
         isHidden = true;
+        hasSuccessfullyHidden = true; 
 
         StartCoroutine(EnterRoutine());
     }
@@ -242,31 +229,44 @@ public class TableHiding : MonoBehaviour
 
         yield return StartCoroutine(FadeToBlack());
 
-        // IMPORTANT: Disable PlayerMovement FIRST.
-        // Its Update() can no longer call CharacterController.Move().
         SaveAndDisableMovement();
-
-        // Only after movement is disabled, disable colliders.
         EnableGhostMode();
 
-        // Move the player without changing rotation.
-        player.position =
-            hidePoint.position -
-            Vector3.up * lowerHidingAmount;
+        player.position = hidePoint.position - Vector3.up * lowerHidingAmount;
 
         yield return StartCoroutine(FadeFromBlack());
 
-        isTransitioning = false;
-        isFading = false;
+        // --- NEW: CHECK EARTHQUAKE PHASE ---
+        if (EarthquakeTimer.IsEarthquakeActive)
+        {
+            // The earthquake is happening. Enable normal grip logic.
+            isTransitioning = false;
+            isFading = false;
+
+            if (gripUIPanel != null) gripUIPanel.SetActive(true);
+            isPointerHoldingGrip = false;
+            slipTimer = 0f;
+        }
+        else
+        {
+            if (gripUIPanel != null) gripUIPanel.SetActive(false);
+            
+            // Allow transitions again so ExitTable() can run
+            isTransitioning = false;
+            isFading = false;
+
+            
+            Debug.Log("The earthquake hasn't started yet! Waiting out here is useless.");
+
+            yield return new WaitForSeconds(0.5f);
+            
+            ExitTable();
+        }
     }
 
     private void ExitTable()
     {
-        if (isFading ||
-            !isHidden ||
-            exitPoint == null)
-            return;
-
+        if (isFading || !isHidden || exitPoint == null) return;
         StartCoroutine(ExitRoutine());
     }
 
@@ -275,12 +275,14 @@ public class TableHiding : MonoBehaviour
         isFading = true;
         isTransitioning = true;
 
+        if (gripUIPanel != null) gripUIPanel.SetActive(false);
+        IsPlayerHiding = false;
+        isPointerHoldingGrip = false;
+
         yield return StartCoroutine(FadeToBlack());
 
-        // Position only; preserve player and camera rotation.
         player.position = exitPoint.position;
 
-        // Restore the controller before movement resumes.
         DisableGhostMode();
         RestoreMovement();
 
@@ -295,29 +297,23 @@ public class TableHiding : MonoBehaviour
 
     private void EnableGhostMode()
     {
-        if (disablePlayerColliders &&
-            playerColliders != null)
+        if (disablePlayerColliders && playerColliders != null)
         {
             for (int i = 0; i < playerColliders.Length; i++)
             {
                 Collider col = playerColliders[i];
-
-                if (col == null)
-                    continue;
-
+                if (col == null) continue;
                 savedColliderStates[i] = col.enabled;
                 col.enabled = false;
             }
         }
 
-        if (freezePlayerRigidbody &&
-            playerRigidbody != null)
+        if (freezePlayerRigidbody && playerRigidbody != null)
         {
             savedIsKinematic = playerRigidbody.isKinematic;
             savedUseGravity = playerRigidbody.useGravity;
             savedVelocity = playerRigidbody.linearVelocity;
-            savedAngularVelocity =
-                playerRigidbody.angularVelocity;
+            savedAngularVelocity = playerRigidbody.angularVelocity;
 
             rigidbodyStateSaved = true;
 
@@ -338,41 +334,28 @@ public class TableHiding : MonoBehaviour
             if (!savedIsKinematic)
             {
                 playerRigidbody.linearVelocity = savedVelocity;
-                playerRigidbody.angularVelocity =
-                    savedAngularVelocity;
+                playerRigidbody.angularVelocity = savedAngularVelocity;
             }
-
             rigidbodyStateSaved = false;
         }
 
-        if (disablePlayerColliders &&
-            playerColliders != null &&
-            savedColliderStates != null)
+        if (disablePlayerColliders && playerColliders != null && savedColliderStates != null)
         {
             for (int i = 0; i < playerColliders.Length; i++)
             {
                 Collider col = playerColliders[i];
-
-                if (col != null)
-                    col.enabled = savedColliderStates[i];
+                if (col != null) col.enabled = savedColliderStates[i];
             }
         }
     }
 
     private void SaveAndDisableMovement()
     {
-        if (movementScriptsToDisable == null)
-            return;
-
-        for (int i = 0;
-             i < movementScriptsToDisable.Length;
-             i++)
+        if (movementScriptsToDisable == null) return;
+        for (int i = 0; i < movementScriptsToDisable.Length; i++)
         {
             Behaviour script = movementScriptsToDisable[i];
-
-            if (script == null)
-                continue;
-
+            if (script == null) continue;
             savedMovementStates[i] = script.enabled;
             script.enabled = false;
         }
@@ -380,58 +363,39 @@ public class TableHiding : MonoBehaviour
 
     private void RestoreMovement()
     {
-        if (movementScriptsToDisable == null ||
-            savedMovementStates == null)
-            return;
-
-        for (int i = 0;
-             i < movementScriptsToDisable.Length;
-             i++)
+        if (movementScriptsToDisable == null || savedMovementStates == null) return;
+        for (int i = 0; i < movementScriptsToDisable.Length; i++)
         {
             Behaviour script = movementScriptsToDisable[i];
-
-            if (script != null)
-                script.enabled = savedMovementStates[i];
+            if (script != null) script.enabled = savedMovementStates[i];
         }
     }
 
     private IEnumerator FadeToBlack()
     {
-        if (blackScreen == null)
-            yield break;
-
+        if (blackScreen == null) yield break;
         blackScreen.blocksRaycasts = true;
         blackScreen.interactable = true;
 
         float elapsed = 0f;
-
         while (elapsed < fadeDuration)
         {
             elapsed += Time.deltaTime;
-
-            blackScreen.alpha = Mathf.Clamp01(
-                elapsed / fadeDuration);
-
+            blackScreen.alpha = Mathf.Clamp01(elapsed / fadeDuration);
             yield return null;
         }
-
         blackScreen.alpha = 1f;
     }
 
     private IEnumerator FadeFromBlack()
     {
-        if (blackScreen == null)
-            yield break;
+        if (blackScreen == null) yield break;
 
         float elapsed = 0f;
-
         while (elapsed < fadeDuration)
         {
             elapsed += Time.deltaTime;
-
-            blackScreen.alpha = 1f - Mathf.Clamp01(
-                elapsed / fadeDuration);
-
+            blackScreen.alpha = 1f - Mathf.Clamp01(elapsed / fadeDuration);
             yield return null;
         }
 
@@ -443,22 +407,17 @@ public class TableHiding : MonoBehaviour
     private void OnDestroy()
     {
         if (sharedButton != null)
-        {
-            sharedButton.onClick.RemoveListener(
-                HandleSharedButtonClick);
-        }
+            sharedButton.onClick.RemoveListener(HandleSharedButtonClick);
 
         if (activeTable == this)
         {
-            // Restore everything if this table is removed mid-hide.
             DisableGhostMode();
             RestoreMovement();
-
             activeTable = null;
             isTransitioning = false;
+            IsPlayerHiding = false; 
         }
 
-        if (candidateTarget == this)
-            candidateTarget = null;
+        if (candidateTarget == this) candidateTarget = null;
     }
 }

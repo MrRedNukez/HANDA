@@ -10,22 +10,31 @@ public class DebrisHazard : MonoBehaviour
     public void Setup(EarthquakeTimer timer)
     {
         timerSystem = timer;
-        
-        // Failsafe: Destroy this object after a few seconds so it doesn't pile up
+
         Destroy(gameObject, lifetime);
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        // Only checks for the player to test the damage and Game Over loop
         if (other.CompareTag("Player"))
         {
             if (timerSystem != null)
             {
                 timerSystem.TakeDebrisDamage(); 
             }
-            
             Destroy(gameObject); 
+        }
+
+        else if (other.CompareTag("Table"))
+        {
+            Debug.Log("Debris blocked by the table!");
+    
+            Destroy(gameObject); 
+        }
+
+        else if (other.CompareTag("Floor"))
+        {
+            Destroy(gameObject);
         }
     }
 }

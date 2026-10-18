@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Ground
   - Water
+  - Table
+  - Floor
   layers:
   - Default
   - TransparentFX

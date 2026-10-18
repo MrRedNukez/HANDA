@@ -6703,7 +6703,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bac086f81c1bec64aa0d6970ade946e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HouseZone
-  simManager: {fileID: 1964577313}
+  simManager: {fileID: 1964577315}
 --- !u!65 &728167175
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7082,7 +7082,7 @@ MonoBehaviour:
   indicatorLight: {fileID: 758200855}
   statusText: {fileID: 2083822884}
   isPowerOff: 0
-  simManager: {fileID: 0}
+  simManager: {fileID: 1964577315}
   correctSequence: 000000000100000002000000030000000400000005000000
   waterTag: Water
   possibleLocations:
@@ -7091,7 +7091,7 @@ MonoBehaviour:
     worldTextDisplay: {fileID: 923904400}
     hintDialogues:
     - 'If i remember correctly the code should be somewhere here in the house? '
-    - Maybe somewhere around here in the first floor.
+    - The code must be somewhere here.
   - locationName: Second Floor
     noteObject: {fileID: 143972004}
     worldTextDisplay: {fileID: 1337300201}
@@ -9265,6 +9265,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   moveSpeed: 3.5
   gravity: -9.81
+  canMove: 1
   groundCheck: {fileID: 1725403189}
   groundDistance: 0.4
   groundMask:
@@ -10167,7 +10168,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0b06648b57835748bdcd61af6a36ca1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LadderEscape
-  simManager: {fileID: 1964577313}
+  simManager: {fileID: 0}
   inventory: {fileID: 1964577310}
   player: {fileID: 977227698}
   roofSpawnPoint: {fileID: 1850204799}
@@ -11924,7 +11925,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1260477315}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1964577314}
+        m_TargetAssemblyTypeName: ReportManager, Assembly-CSharp
+        m_MethodName: RestartSimulation
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1260477315
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12045,7 +12058,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1260564350}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1964577314}
+        m_TargetAssemblyTypeName: ReportManager, Assembly-CSharp
+        m_MethodName: ReturnToMainMenu
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1260564350
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12809,6 +12834,7 @@ MonoBehaviour:
   lookSensitivity: 15
   minPitch: -80
   maxPitch: 80
+  canLook: 1
 --- !u!135 &1313568460
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -15629,7 +15655,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2090784696}
         m_TargetAssemblyTypeName: PhoneHUDController, Assembly-CSharp
-        m_MethodName: OpenPhone
+        m_MethodName: TogglePhone
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -19057,8 +19083,8 @@ GameObject:
   - component: {fileID: 1964577311}
   - component: {fileID: 1964577310}
   - component: {fileID: 1964577312}
-  - component: {fileID: 1964577313}
   - component: {fileID: 1964577314}
+  - component: {fileID: 1964577315}
   m_Layer: 0
   m_Name: Managers
   m_TagString: Untagged
@@ -19081,8 +19107,12 @@ MonoBehaviour:
   flashlightLight: {fileID: 309394749}
   bagFlashlightButton: {fileID: 1719132626}
   hudFlashlightButton: {fileID: 1831615450}
-  hasLadder: 0
   playerOwnsFlashlight: 0
+  bagFirstAidButton: {fileID: 0}
+  hasUsedFirstAid: 0
+  hasLadder: 0
+  warningTextObject: {fileID: 0}
+  warningDuration: 2.5
 --- !u!4 &1964577311
 Transform:
   m_ObjectHideFlags: 0
@@ -19113,28 +19143,12 @@ MonoBehaviour:
   currentState: 0
   waterSlider: {fileID: 274877909}
   redAlertGroup: {fileID: 369622131}
-  simManager: {fileID: 1964577313}
+  simManager: {fileID: 1964577315}
   physicalWater: {fileID: 1665873364}
-  prepTime: 15
+  prepTime: 5
   maxAlertOpacity: 1
   pulseSpeed: 1
   alertDuration: 3
---- !u!114 &1964577313
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1964577309}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a324b6a83287afa44932f0f3c72dc8d2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SimulationManager
-  reportManager: {fileID: 1964577314}
-  fuseBox: {fileID: 788500109}
-  inventory: {fileID: 1964577310}
-  isPlayerInsideHouse: 0
 --- !u!114 &1964577314
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19160,10 +19174,36 @@ MonoBehaviour:
   - 'Water and electricity: a deadly embrace.'
   - A single spark in the dark is all it takes.
   - The power you left on became your own executioner.
+  crushedQuotes:
+  - Debris does not yield to those standing in the open.
+  - A sturdy table could have been the difference between life and death.
+  - When the earth shakes, the sky falls.
+  explosionQuotes:
+  - A single spark in a gas-filled room is all it takes.
+  - The shaking stopped, but the true danger had just begun.
+  - Unsecured hazards turn natural disasters into man-made tragedies.
   gradeText: {fileID: 888160927}
   commentText: {fileID: 803642167}
   recommendationText: {fileID: 452284025}
   checklistText: {fileID: 668254485}
+--- !u!114 &1964577315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1964577309}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aeb5c3d0830d4fc4e8d0cd95d816e8f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SimulationManager
+  reportManager: {fileID: 1964577314}
+  fuseBox: {fileID: 788500109}
+  inventory: {fileID: 1964577310}
+  gasTank: {fileID: 0}
+  hasSuccessfullyHidden: 0
+  isPlayerInsideHouse: 0
 --- !u!1001 &1976258401
 PrefabInstance:
   m_ObjectHideFlags: 0
