@@ -31,6 +31,7 @@ public class FuseButtonSequence : MonoBehaviour
     [Header("Simulation State")]
     public bool isPowerOff = false;
     public SimulationManager simManager;
+    public TVBroadcast tvBroadcast; // NEW: Reference to the TV broadcast
     private bool hasBeenWarned = false;
 
     [Header("Correct Sequence")]
@@ -69,233 +70,235 @@ public class FuseButtonSequence : MonoBehaviour
 
     private void Start()
     {
-        if (vignetteUI != null) vignetteUI.SetActive(false);
+        if (vignetteUI != null) vignetteUI.SetActive(false); //
 
-        for (int i = 0; i < switchButtons.Length; i++)
+        for (int i = 0; i < switchButtons.Length; i++) 
         {
-            int index = i;
-            if (switchButtons[i] != null)
+            int index = i; 
+            if (switchButtons[i] != null) 
             {
-                switchButtons[i].onClick.AddListener(() => PressSwitch(index));
+                switchButtons[i].onClick.AddListener(() => PressSwitch(index)); 
             }
         }
 
-        ResetPuzzle();
-        SetupRandomCodeLocation();
+        ResetPuzzle(); 
+        SetupRandomCodeLocation(); 
 
-        if (indicatorLight != null) indicatorLight.color = readyColor;
-        if (statusText != null) statusText.text = "ACTIVATE THE SWITCHES";
+        if (indicatorLight != null) indicatorLight.color = readyColor; 
+        if (statusText != null) statusText.text = "ACTIVATE THE SWITCHES"; 
 
-        TurnHouseLightsOn();
+        TurnHouseLightsOn(); 
     }
 
-    // --- NEW COLLIDER LOGIC ---
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag(waterTag))
+        if (other.CompareTag(waterTag)) 
         {
-            isSubmerged = true;
-            Debug.Log("Fuse Box is now submerged in water.");
+            isSubmerged = true; 
+            Debug.Log("Fuse Box is now submerged in water."); 
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag(waterTag))
+        if (other.CompareTag(waterTag)) 
         {
-            isSubmerged = false;
-            Debug.Log("Water receded from Fuse Box.");
+            isSubmerged = false; 
+            Debug.Log("Water receded from Fuse Box."); 
         }
     }
-    // --------------------------
 
     private void SetupRandomCodeLocation()
     {
-        for (int i = 0; i < correctSequence.Length; i++)
+        for (int i = 0; i < correctSequence.Length; i++) 
         {
-            int temp = correctSequence[i];
-            int randomIndex = Random.Range(i, correctSequence.Length);
-            correctSequence[i] = correctSequence[randomIndex];
-            correctSequence[randomIndex] = temp;
+            int temp = correctSequence[i]; 
+            int randomIndex = Random.Range(i, correctSequence.Length); 
+            correctSequence[i] = correctSequence[randomIndex]; 
+            correctSequence[randomIndex] = temp; 
         }
 
-        foreach (CodeLocation loc in possibleLocations)
+        foreach (CodeLocation loc in possibleLocations) 
         {
-            if (loc.noteObject != null) loc.noteObject.SetActive(false);
+            if (loc.noteObject != null) loc.noteObject.SetActive(false); 
         }
 
-        if (possibleLocations.Length > 0)
+        if (possibleLocations.Length > 0) 
         {
-            int randomLocIndex = Random.Range(0, possibleLocations.Length);
-            CodeLocation activeLocation = possibleLocations[randomLocIndex];
+            int randomLocIndex = Random.Range(0, possibleLocations.Length); 
+            CodeLocation activeLocation = possibleLocations[randomLocIndex]; 
             
-            activeLocation.noteObject.SetActive(true);
+            activeLocation.noteObject.SetActive(true); 
 
-            if (activeLocation.hintDialogues != null && activeLocation.hintDialogues.Length > 0)
+            if (activeLocation.hintDialogues != null && activeLocation.hintDialogues.Length > 0) 
             {
-                int randomHintIndex = Random.Range(0, activeLocation.hintDialogues.Length);
-                activeHint = activeLocation.hintDialogues[randomHintIndex];
+                int randomHintIndex = Random.Range(0, activeLocation.hintDialogues.Length); 
+                activeHint = activeLocation.hintDialogues[randomHintIndex]; 
             }
 
-            if (activeLocation.worldTextDisplay != null)
+            if (activeLocation.worldTextDisplay != null) 
             {
-                string readableCode = "";
-                for (int i = 0; i < correctSequence.Length; i++)
+                string readableCode = ""; 
+                for (int i = 0; i < correctSequence.Length; i++) 
                 {
-                    readableCode += (correctSequence[i] + 1).ToString();
-                    if (i < correctSequence.Length - 1) readableCode += "-";
+                    readableCode += (correctSequence[i] + 1).ToString(); 
+                    if (i < correctSequence.Length - 1) readableCode += "-"; 
                 }
-                activeLocation.worldTextDisplay.text = readableCode;
+                activeLocation.worldTextDisplay.text = readableCode; 
             }
         }
     }
 
     public void PressSwitch(int index)
     {
-        if (puzzleCompleted || isResetting) return;
+        if (puzzleCompleted || isResetting) return; 
 
-        if (isSubmerged)
+        if (isSubmerged) 
         {
-            if (!hasBeenWarned)
+            if (!hasBeenWarned) 
             {
-                // Strike 1: The Warning
-                ShowDialogue("Water level is too high! Touching it now will kill me.");
-                hasBeenWarned = true; 
+                ShowDialogue("Water level is too high! Touching it now will kill me."); 
+                hasBeenWarned = true;  
             }
             else
             {
-                // Strike 2: The Consequence
-                Debug.Log("Player ignored flood warning. Triggering Electrocution.");
-                if (simManager != null)
+                Debug.Log("Player ignored flood warning. Triggering Electrocution."); 
+                if (simManager != null) 
                 {
-                    simManager.SetPlayerInside(true); 
-                    simManager.EndSimulation(false); 
+                    simManager.SetPlayerInside(true);  
+                    simManager.EndSimulation(false);  
                 }
             }
-            return; 
+            return;  
         }
 
-        if (enteredSequence.Contains(index)) return;
+        if (enteredSequence.Contains(index)) return; 
 
-        enteredSequence.Add(index);
-        if (switchImages[index] != null) switchImages[index].color = readyColor;
+        enteredSequence.Add(index); 
+        if (switchImages[index] != null) switchImages[index].color = readyColor; 
 
-        if (enteredSequence.Count == correctSequence.Length)
+        if (enteredSequence.Count == correctSequence.Length) 
         {
-            VerifyFullSequence();
+            VerifyFullSequence(); 
         }
     }
 
     private void VerifyFullSequence()
     {
-        bool isCorrect = true;
+        bool isCorrect = true; 
         
-        for (int i = 0; i < correctSequence.Length; i++)
+        for (int i = 0; i < correctSequence.Length; i++) 
         {
-            if (enteredSequence[i] != correctSequence[i])
+            if (enteredSequence[i] != correctSequence[i]) 
             {
-                isCorrect = false;
-                break;
+                isCorrect = false; 
+                break; 
             }
         }
 
-        if (isCorrect)
+        if (isCorrect) 
         {
-            CompletePuzzle();
+            CompletePuzzle(); 
         }
         else
         {
-            failedAttempts++;
+            failedAttempts++; 
             
-            if (failedAttempts == 2)
+            if (failedAttempts == 2) 
             {
-                ShowDialogue(activeHint);
-                failedAttempts = 0; 
+                ShowDialogue(activeHint); 
+                failedAttempts = 0;  
             }
             else
             {
-                ShowDialogue("Incorrect sequence.");
+                ShowDialogue("Incorrect sequence."); 
             }
 
-            if (indicatorLight != null) indicatorLight.color = wrongColor;
-            if (statusText != null) statusText.text = "WRONG SEQUENCE!";
+            if (indicatorLight != null) indicatorLight.color = wrongColor; 
+            if (statusText != null) statusText.text = "WRONG SEQUENCE!"; 
 
-            foreach (int btnIndex in enteredSequence)
+            foreach (int btnIndex in enteredSequence) 
             {
-                if (switchImages[btnIndex] != null) switchImages[btnIndex].color = wrongColor;
+                if (switchImages[btnIndex] != null) switchImages[btnIndex].color = wrongColor; 
             }
 
-            StartCoroutine(ResetAfterDelay());
+            StartCoroutine(ResetAfterDelay()); 
         }
     }
 
     private IEnumerator ResetAfterDelay()
     {
-        isResetting = true;
-        yield return new WaitForSeconds(wrongResetDelay);
-        ResetPuzzle();
+        isResetting = true; 
+        yield return new WaitForSeconds(wrongResetDelay); 
+        ResetPuzzle(); 
         
-        if (indicatorLight != null) indicatorLight.color = readyColor;
-        if (statusText != null) statusText.text = "TRY AGAIN";
-        isResetting = false;
+        if (indicatorLight != null) indicatorLight.color = readyColor; 
+        if (statusText != null) statusText.text = "TRY AGAIN"; 
+        isResetting = false; 
     }
 
     public void ResetPuzzle()
     {
-        enteredSequence.Clear();
-        for (int i = 0; i < switchImages.Length; i++)
+        enteredSequence.Clear(); 
+        for (int i = 0; i < switchImages.Length; i++) 
         {
-            if (switchImages[i] != null) switchImages[i].color = offColor;
+            if (switchImages[i] != null) switchImages[i].color = offColor; 
         }
     }
 
     private void CompletePuzzle()
     {
-        puzzleCompleted = true;
-        ShowDialogue("Power disabled. Phew");
+        puzzleCompleted = true; 
+        ShowDialogue("Power disabled. Phew"); 
 
-        if (indicatorLight != null) indicatorLight.color = correctColor;
-        if (statusText != null) statusText.text = "POWER OFF — COMPLETED!";
+        if (indicatorLight != null) indicatorLight.color = correctColor; 
+        if (statusText != null) statusText.text = "POWER OFF — COMPLETED!"; 
 
-        for (int i = 0; i < switchImages.Length; i++)
+        for (int i = 0; i < switchImages.Length; i++) 
         {
-            if (switchImages[i] != null) switchImages[i].color = correctColor;
+            if (switchImages[i] != null) switchImages[i].color = correctColor; 
         }
 
-        TurnHouseLightsOff();
+        TurnHouseLightsOff(); 
     }
 
     private void TurnHouseLightsOff()
     {
-        isPowerOff = true;
-        RenderSettings.ambientLight = Color.black;
-        if (vignetteUI != null) vignetteUI.SetActive(true);
+        isPowerOff = true; 
+        RenderSettings.ambientLight = Color.black; 
+        if (vignetteUI != null) vignetteUI.SetActive(true); 
 
-        foreach (Light lightSource in gameLights)
-            if (lightSource != null) lightSource.enabled = false;
+        foreach (Light lightSource in gameLights) 
+            if (lightSource != null) lightSource.enabled = false; 
 
-        foreach (GameObject lightOn in lightsOn)
-            if (lightOn != null) lightOn.SetActive(false);
+        foreach (GameObject lightOn in lightsOn) 
+            if (lightOn != null) lightOn.SetActive(false); 
 
-        foreach (GameObject lightOff in lightsOff)
-            if (lightOff != null) lightOff.SetActive(true);
+        foreach (GameObject lightOff in lightsOff) 
+            if (lightOff != null) lightOff.SetActive(true); 
+
+        // NEW: Shut down the TV when the power is cut
+        if (tvBroadcast != null)
+        {
+            tvBroadcast.ShutOff();
+        }
     }
 
     private void TurnHouseLightsOn()
     {
-        foreach (Light lightSource in gameLights)
-            if (lightSource != null) lightSource.enabled = true;
+        foreach (Light lightSource in gameLights) 
+            if (lightSource != null) lightSource.enabled = true; 
 
-        foreach (GameObject lightOn in lightsOn)
-            if (lightOn != null) lightOn.SetActive(true);
+        foreach (GameObject lightOn in lightsOn) 
+            if (lightOn != null) lightOn.SetActive(true); 
 
-        foreach (GameObject lightOff in lightsOff)
-            if (lightOff != null) lightOff.SetActive(false);
+        foreach (GameObject lightOff in lightsOff) 
+            if (lightOff != null) lightOff.SetActive(false); 
     }
 
     private void ShowDialogue(string text)
     {
-        if (dialogueUI != null) dialogueUI.text = text;
-        Debug.Log("Dialogue: " + text);
+        if (dialogueUI != null) dialogueUI.text = text; 
+        Debug.Log("Dialogue: " + text); 
     }
 }

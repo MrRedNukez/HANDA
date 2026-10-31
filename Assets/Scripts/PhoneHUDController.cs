@@ -7,6 +7,10 @@ public class PhoneHUDController : MonoBehaviour
     [Header("Phone Model")]
     public Transform phoneModel;
 
+    [Header("States")]
+    public PlayerMovement playerMovement;
+    public SimulationTimeline timeline;
+
     [Header("Phone Positions")]
     public Transform bottomRightPosition;
     public Transform openPosition;
@@ -131,6 +135,14 @@ public class PhoneHUDController : MonoBehaviour
 
     public void ClosePhone()
     {
+        StopAllCoroutines(); 
+        if (notificationPanel != null) notificationPanel.SetActive(false);
+
+        if (playerMovement != null && timeline != null && !timeline.isTransitioning)
+        {
+            playerMovement.canMove = true;
+        }
+
         if (!phoneOpen || isMoving || !ReferencesAssigned()) return;
 
         if (homeScreen != null) homeScreen.SetActive(false);

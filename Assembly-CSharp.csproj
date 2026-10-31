@@ -57,6 +57,7 @@
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeA.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\EnvMapAnimator.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextSelector_A.cs" />
+    <Compile Include="Assets\Scripts\Flood\TVBroadcast.cs" />
     <Compile Include="Assets\Scripts\Earthquake\PlayerSpawner.cs" />
     <Compile Include="Assets\Scripts\Flood\InventoryManager.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark01_UGUI.cs" />
@@ -119,6 +120,7 @@
     <Compile Include="Assets\Scripts\UIFlicker.cs" />
     <Compile Include="Assets\Scripts\Flood\FloodManager.cs" />
     <Compile Include="Assets\Scripts\Flood\LadderPickup.cs" />
+    <Compile Include="Assets\Scripts\ContextualMinigame.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\SkewTextExample.cs" />
     <Compile Include="Assets\Scripts\Flood\LadderEscape.cs" />
     <Compile Include="Assets\TextMesh Pro\Examples &amp; Extras\Scripts\WarpTextExample.cs" />

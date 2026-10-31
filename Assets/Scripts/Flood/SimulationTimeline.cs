@@ -1,6 +1,6 @@
-using UnityEngine;
-using UnityEngine.UI; // Required for the fade panel
 using System.Collections;
+using UnityEngine;
+using TMPro;
 
 public class SimulationTimeline : MonoBehaviour
 {
@@ -13,89 +13,133 @@ public class SimulationTimeline : MonoBehaviour
     [Header("System References")]
     public PhoneHUDController phoneManager;
     public Light directionalLight;
-    public FloodManager floodManager;
+    public FloodManager floodManager; 
+    public PlayerMovement playerMovement; // NEW: Reference to freeze movement
+
+    [Header("Transition Settings")]
+    public CanvasGroup fadePanel;
+    public float fadeDuration = 2f;
+
+    [Header("State")]
+    public bool isTransitioning = false;
+
+    [Header("TV Broadcast Sequence")]
+    public TVBroadcast tvBroadcast;
+    public float tvBroadcastDuration = 8f;
     
+    [Header("Day 2 Buffer & UI")]
+    public float day2BufferTime = 5f;
+    public TextMeshProUGUI transitionText; 
 
-    [Header("Transition UI")]
-    public Image fadePanel; // Link a full-screen black UI Image here
-    public float fadeSpeed = 1f;
+    [Header("Player Teleportation")]
+    public Transform playerTransform;
+    public Transform day2SpawnPoint;
 
-    void Start()
+    private void Start()
     {
-        // Ensure the screen starts clear
-        if (fadePanel != null) fadePanel.color = new Color(0, 0, 0, 0);
+        isDay1 = true;
+        if (fadePanel != null) fadePanel.alpha = 0f;
+        if (transitionText != null) transitionText.gameObject.SetActive(false);
+
         StartCoroutine(Day1Sequence());
     }
 
     private IEnumerator Day1Sequence()
     {
-        // Safe math for your 30-second testing
         float waitTime = day1TotalDuration - 15f;
         if (waitTime > 0)
         {
             yield return new WaitForSeconds(waitTime);
         }
 
-        // 1. Send the message (Plays audio, queues text)
         if (phoneManager != null) 
         {
             phoneManager.ReceiveRelativeMessage(relativeMessage);
         }
 
-        // 2. Give them exactly 5 seconds to open it themselves
         yield return new WaitForSeconds(5f);
 
-        // 3. Force it open ONLY if they never read the message
+        // Force open and freeze if ignored
         if (phoneManager != null && phoneManager.HasUnreadMessage)
         {
-            // (If you have a player controller reference, disable movement here)
+            if (playerMovement != null) playerMovement.canMove = false;
             phoneManager.ForceOpenPhone();
+            
+            yield return new WaitForSeconds(5f); // Wait while they read it
+            
+            if (playerMovement != null) playerMovement.canMove = true;
+        }
+        else
+        {
+            yield return new WaitForSeconds(5f); // Balance the timer if they opened it manually
         }
 
-        // 4. Wait the final 10 seconds of Day 1
-        yield return new WaitForSeconds(10f);
+        // Wait the remaining 5 seconds of Day 1
+        yield return new WaitForSeconds(5f); 
 
-        // 5. Fade to black and start Day 2
         StartCoroutine(TransitionToDay2());
     }
 
     private IEnumerator TransitionToDay2()
     {
-        if (floodManager != null)
-        {
-            floodManager.StartFloodEvent();
-        }
+        isTransitioning = true; 
+        if (playerMovement != null) playerMovement.canMove = false;
 
-        float alpha = 0f;
-        while (alpha < 1f)
+        if (phoneManager != null) phoneManager.ClosePhone();
+        
+        // 1. Fade out to black
+        float elapsed = 0f;
+        while (elapsed < fadeDuration)
         {
-            alpha += Time.deltaTime * fadeSpeed;
-            fadePanel.color = new Color(0, 0, 0, alpha);
+            elapsed += Time.deltaTime;
+            fadePanel.alpha = Mathf.Clamp01(elapsed / fadeDuration);
             yield return null;
         }
+        fadePanel.alpha = 1f;
 
-        // 2. Execute the environment swap while the screen is pitch black
+        // 2. Day 2 Mid-Transition Setup (Pitch Black)
         isDay1 = false;
-        
-        if (phoneManager != null) phoneManager.EnableBatteryDrain();
-        
-        if (directionalLight != null)
+        if (transitionText != null)
         {
-            directionalLight.color = Color.gray; 
-            directionalLight.intensity = 0.5f;
+            transitionText.text = "The next day..";
+            transitionText.gameObject.SetActive(true);
         }
-        
-        Debug.Log("Day 2 started. Environment swapped in the dark.");
 
-        // Wait 1 second in total darkness to build tension
-        yield return new WaitForSeconds(1f); 
-
-        // 3. Fade back to clear gameplay
-        while (alpha > 0f)
+        if (playerTransform != null && day2SpawnPoint != null)
         {
-            alpha -= Time.deltaTime * fadeSpeed;
-            fadePanel.color = new Color(0, 0, 0, alpha);
+            CharacterController cc = playerTransform.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false; 
+
+            playerTransform.position = day2SpawnPoint.position;
+            playerTransform.rotation = day2SpawnPoint.rotation;
+
+            if (cc != null) cc.enabled = true;
+        }
+
+        // 3. Wait in the dark
+        yield return new WaitForSeconds(day2BufferTime);
+
+        if (transitionText != null) transitionText.gameObject.SetActive(false);
+
+        // 4. Fade back in
+        elapsed = 0f;
+        while (elapsed < fadeDuration)
+        {
+            elapsed += Time.deltaTime;
+            fadePanel.alpha = 1f - Mathf.Clamp01(elapsed / fadeDuration);
             yield return null;
         }
+        fadePanel.alpha = 0f;
+        
+        // 5. Unfreeze player and play TV News
+        if (playerMovement != null) playerMovement.canMove = true;
+        if (tvBroadcast != null) tvBroadcast.PlayNews();
+
+        // 6. Wait for the broadcast to finish
+        yield return new WaitForSeconds(tvBroadcastDuration);
+
+        // 7. Start the disaster
+        if (floodManager != null) floodManager.StartFloodEvent();
+        if (phoneManager != null) phoneManager.EnableBatteryDrain();
     }
 }
