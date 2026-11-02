@@ -8,6 +8,8 @@ public class PhoneHUDController : MonoBehaviour
     [Header("Phone Model")]
     public Transform phoneModel;
 
+public GameObject notificationBadge;
+
     [Header("States")]
     public PlayerMovement playerMovement;
     public SimulationTimeline timeline;

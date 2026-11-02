@@ -1,21 +1,44 @@
-
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
 public class SimulationTimeline : MonoBehaviour
 {
+    public enum MessageDay { Day1, Day2 }
+
+    [Serializable]
+    public class ScheduledMessage
+    {
+        [TextArea(2, 3)]
+        public string message;
+
+        [Tooltip("Day 1: seconds since the game started. Day 2: seconds since Day 2 began (after the fade-in).")]
+        public MessageDay day = MessageDay.Day1;
+
+        [Tooltip("Seconds after the start of that day (the timer pauses while Time.timeScale is 0).")]
+        public float sendAtSeconds = 5f;
+    }
+
     [Header("Timeline Settings")]
     public float day1TotalDuration = 60f;
     public bool isDay1 = true;
     [TextArea(2, 3)]
     public string relativeMessage = "Heavy storm incoming. Prepare the house!";
 
+    [Header("Scheduled Messages")]
+    public List<ScheduledMessage> scheduledMessages = new List<ScheduledMessage>();
+
     [Header("System References")]
     public PhoneHUDController phoneManager;
     public Light directionalLight;
     public FloodManager floodManager;
     public PlayerMovement playerMovement;
+
+    // NEW: drag the object holding MessageLogApp here
+    [Header("Message Log")]
+    public MessageLogApp messageLog;
 
     [Header("Phone Notification Badge")]
     public GameObject notificationBadge;
@@ -54,6 +77,69 @@ public class SimulationTimeline : MonoBehaviour
             notificationBadge.SetActive(false);
 
         StartCoroutine(Day1Sequence());
+        StartCoroutine(ScheduledMessageRoutine(MessageDay.Day1));
+    }
+
+    // Clears the badge once the player has opened the phone
+    private void Update()
+    {
+        if (notificationBadge != null &&
+            notificationBadge.activeSelf &&
+            phoneManager != null &&
+            phoneManager.isPhoneActive)
+        {
+            notificationBadge.SetActive(false);
+        }
+    }
+
+    // NEW: sends a message to the phone popup AND saves it in the message log
+    private void DeliverMessage(string text)
+    {
+        if (phoneManager != null)
+            phoneManager.ReceiveRelativeMessage(text);
+
+        if (messageLog != null)
+            messageLog.AddMessage(text, isDay1 ? "Day 1" : "Day 2");
+    }
+
+    private IEnumerator ScheduledMessageRoutine(MessageDay day)
+    {
+        // Only take this day's messages, earliest first
+        List<ScheduledMessage> queue = new List<ScheduledMessage>();
+        foreach (ScheduledMessage m in scheduledMessages)
+        {
+            if (m.day == day)
+                queue.Add(m);
+        }
+        queue.Sort((a, b) => a.sendAtSeconds.CompareTo(b.sendAtSeconds));
+
+        float timer = 0f;
+
+        foreach (ScheduledMessage msg in queue)
+        {
+            // Wait until this message's time (Time.deltaTime pauses with the game)
+            while (timer < msg.sendAtSeconds)
+            {
+                timer += Time.deltaTime;
+                yield return null;
+            }
+
+            // Day 1 messages stop once Day 1 is over
+            if (day == MessageDay.Day1 && !isDay1)
+                yield break;
+
+            if (!string.IsNullOrEmpty(msg.message))
+            {
+                DeliverMessage(msg.message); // CHANGED
+
+                if (notificationBadge != null &&
+                    phoneManager != null &&
+                    !phoneManager.isPhoneActive)
+                {
+                    notificationBadge.SetActive(true);
+                }
+            }
+        }
     }
 
     private IEnumerator Day1Sequence()
@@ -68,7 +154,7 @@ public class SimulationTimeline : MonoBehaviour
         if (phoneManager != null)
         {
             // Receive message.
-            phoneManager.ReceiveRelativeMessage(relativeMessage);
+            DeliverMessage(relativeMessage); // CHANGED
 
             // Show red notification badge if phone is not already open.
             if (notificationBadge != null &&
@@ -186,6 +272,9 @@ public class SimulationTimeline : MonoBehaviour
         }
 
         fadePanel.alpha = 0f;
+
+        // Day 2 has begun, start its message timer
+        StartCoroutine(ScheduledMessageRoutine(MessageDay.Day2));
 
         // 5. Unfreeze player and play TV News.
         if (playerMovement != null)

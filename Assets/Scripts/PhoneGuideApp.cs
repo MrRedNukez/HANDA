@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -36,6 +35,10 @@ public class PhoneGuideApp : MonoBehaviour
 
     [Header("Phone Integration")]
     [SerializeField] private PhoneHUDController phoneController;
+
+    // NEW: drag the object holding StartUpGuide here
+    [Header("Notification")]
+    [SerializeField] private StartUpGuide startUpGuide;
 
     [Header("Game Control")]
     [SerializeField] private bool freezeGameWhenOpen = true;
@@ -75,8 +78,20 @@ public class PhoneGuideApp : MonoBehaviour
         Debug.Log("Total Guide Pages: " + pages.Count);
     }
 
-    // OPEN GUIDE
+    // OPEN GUIDE (player opens the messages from the phone)
     public void OpenGuide()
+    {
+        OpenGuideInternal(true); // CHANGED
+    }
+
+    // STARTUP GUIDE (automatic, keeps the badge until the guide is closed)
+    public void ShowGuide()
+    {
+        OpenGuideInternal(false); // CHANGED
+    }
+
+    // NEW: shared open logic
+    private void OpenGuideInternal(bool clearNotification)
     {
         if (isOpen)
             return;
@@ -100,13 +115,11 @@ public class PhoneGuideApp : MonoBehaviour
         if (freezeGameWhenOpen)
             Time.timeScale = 0f;
 
-        Debug.Log("Guide opened.");
-    }
+        // NEW: the player opened the messages, so the badge goes away
+        if (clearNotification && startUpGuide != null)
+            startUpGuide.HideNotification();
 
-    // STARTUP GUIDE
-    public void ShowGuide()
-    {
-        OpenGuide();
+        Debug.Log("Guide opened.");
     }
 
     // CLOSE GUIDE
@@ -140,6 +153,10 @@ public class PhoneGuideApp : MonoBehaviour
 
         if (freezeGameWhenOpen)
             Time.timeScale = previousTimeScale;
+
+        // NEW: once the guide has been seen, the badge always goes away
+        if (startUpGuide != null)
+            startUpGuide.HideNotification();
 
         Debug.Log("Guide closed.");
     }

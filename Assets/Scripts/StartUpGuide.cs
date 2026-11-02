@@ -11,6 +11,9 @@ public class StartUpGuide : MonoBehaviour
     [Tooltip("Delay before showing the guide.")]
     [SerializeField] private float startupDelay = 1f;
 
+    [Header("Notification Badge")]
+    [SerializeField] private GameObject notificationBadge;
+
     [Header("Notification Sound")]
     [SerializeField] private bool playNotificationSound = true;
 
@@ -19,45 +22,71 @@ public class StartUpGuide : MonoBehaviour
     [Tooltip("Optional. If empty, a temporary AudioSource is used.")]
     [SerializeField] private AudioSource audioSource;
 
+    // NEW: call this when the player opens the messages app
+    public void HideNotification()
+    {
+        if (notificationBadge != null)
+        {
+            notificationBadge.SetActive(false);
+        }
+    }
+
     private IEnumerator Start()
     {
+        // Hide the badge initially.
+        if (notificationBadge != null)
+        {
+            notificationBadge.SetActive(false);
+        }
+
         // Wait using real time, even if gameplay is paused.
         if (startupDelay > 0f)
         {
             yield return new WaitForSecondsRealtime(startupDelay);
         }
 
-        if (playNotificationSound && notificationSound != null)
+        if (showGuideOnStartup)
         {
-            if (audioSource != null)
+            // Show the red badge when the startup notification arrives.
+            if (notificationBadge != null)
             {
-                audioSource.PlayOneShot(notificationSound);
+                notificationBadge.SetActive(true);
             }
-            else
+
+            // Play the notification sound.
+            if (playNotificationSound && notificationSound != null)
             {
-                // Play independently of the game's time scale.
-                GameObject soundObject =
-                    new GameObject("StartupNotificationAudio");
+                if (audioSource != null)
+                {
+                    audioSource.PlayOneShot(notificationSound);
+                }
+                else
+                {
+                    // Play independently of the game's time scale.
+                    GameObject soundObject =
+                        new GameObject("StartupNotificationAudio");
 
-                AudioSource source =
-                    soundObject.AddComponent<AudioSource>();
+                    AudioSource source =
+                        soundObject.AddComponent<AudioSource>();
 
-                source.playOnAwake = false;
-                source.spatialBlend = 0f;
-                source.ignoreListenerPause = true;
+                    source.playOnAwake = false;
+                    source.spatialBlend = 0f;
+                    source.ignoreListenerPause = true;
 
-                source.PlayOneShot(notificationSound);
+                    source.PlayOneShot(notificationSound);
 
-                Destroy(
-                    soundObject,
-                    notificationSound.length + 0.2f
-                );
+                    Destroy(
+                        soundObject,
+                        notificationSound.length + 0.2f
+                    );
+                }
             }
-        }
 
-        if (showGuideOnStartup && guideApp != null)
-        {
-            guideApp.ShowGuide();
+            // Show the guide.
+            if (guideApp != null)
+            {
+                guideApp.ShowGuide();
+            }
         }
     }
 }
