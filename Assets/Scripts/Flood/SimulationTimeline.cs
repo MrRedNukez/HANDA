@@ -1,3 +1,4 @@
+
 using System.Collections;
 using UnityEngine;
 using TMPro;
@@ -13,8 +14,11 @@ public class SimulationTimeline : MonoBehaviour
     [Header("System References")]
     public PhoneHUDController phoneManager;
     public Light directionalLight;
-    public FloodManager floodManager; 
-    public PlayerMovement playerMovement; // NEW: Reference to freeze movement
+    public FloodManager floodManager;
+    public PlayerMovement playerMovement;
+
+    [Header("Phone Notification Badge")]
+    public GameObject notificationBadge;
 
     [Header("Transition Settings")]
     public CanvasGroup fadePanel;
@@ -26,10 +30,10 @@ public class SimulationTimeline : MonoBehaviour
     [Header("TV Broadcast Sequence")]
     public TVBroadcast tvBroadcast;
     public float tvBroadcastDuration = 8f;
-    
+
     [Header("Day 2 Buffer & UI")]
     public float day2BufferTime = 5f;
-    public TextMeshProUGUI transitionText; 
+    public TextMeshProUGUI transitionText;
 
     [Header("Player Teleportation")]
     public Transform playerTransform;
@@ -38,8 +42,16 @@ public class SimulationTimeline : MonoBehaviour
     private void Start()
     {
         isDay1 = true;
-        if (fadePanel != null) fadePanel.alpha = 0f;
-        if (transitionText != null) transitionText.gameObject.SetActive(false);
+
+        if (fadePanel != null)
+            fadePanel.alpha = 0f;
+
+        if (transitionText != null)
+            transitionText.gameObject.SetActive(false);
+
+        // Hide notification badge at the beginning.
+        if (notificationBadge != null)
+            notificationBadge.SetActive(false);
 
         StartCoroutine(Day1Sequence());
     }
@@ -47,58 +59,95 @@ public class SimulationTimeline : MonoBehaviour
     private IEnumerator Day1Sequence()
     {
         float waitTime = day1TotalDuration - 15f;
+
         if (waitTime > 0)
         {
             yield return new WaitForSeconds(waitTime);
         }
 
-        if (phoneManager != null) 
+        if (phoneManager != null)
         {
+            // Receive message.
             phoneManager.ReceiveRelativeMessage(relativeMessage);
+
+            // Show red notification badge if phone is not already open.
+            if (notificationBadge != null &&
+                !phoneManager.isPhoneActive)
+            {
+                notificationBadge.SetActive(true);
+            }
         }
 
+        // Wait for player to read the message or until forced open.
         yield return new WaitForSeconds(5f);
 
-        // Force open and freeze if ignored
+        // Force open and freeze if ignored.
         if (phoneManager != null && phoneManager.HasUnreadMessage)
         {
-            if (playerMovement != null) playerMovement.canMove = false;
+            if (playerMovement != null)
+                playerMovement.canMove = false;
+
             phoneManager.ForceOpenPhone();
-            
-            yield return new WaitForSeconds(5f); // Wait while they read it
-            
-            if (playerMovement != null) playerMovement.canMove = true;
+
+            // Wait until the phone is opened.
+            while (!phoneManager.isPhoneActive)
+            {
+                yield return null;
+            }
+
+            // Remove red notification badge when phone opens.
+            if (notificationBadge != null)
+                notificationBadge.SetActive(false);
+
+            yield return new WaitForSeconds(5f);
+
+            if (playerMovement != null)
+                playerMovement.canMove = true;
         }
         else
         {
-            yield return new WaitForSeconds(5f); // Balance the timer if they opened it manually
+            // Player already opened and read the message.
+            if (notificationBadge != null)
+                notificationBadge.SetActive(false);
+
+            yield return new WaitForSeconds(5f);
         }
 
-        // Wait the remaining 5 seconds of Day 1
-        yield return new WaitForSeconds(5f); 
+        // Wait the remaining 5 seconds of Day 1.
+        yield return new WaitForSeconds(5f);
 
         StartCoroutine(TransitionToDay2());
     }
 
     private IEnumerator TransitionToDay2()
     {
-        isTransitioning = true; 
-        if (playerMovement != null) playerMovement.canMove = false;
+        isTransitioning = true;
 
-        if (phoneManager != null) phoneManager.ClosePhone();
-        
-        // 1. Fade out to black
+        if (playerMovement != null)
+            playerMovement.canMove = false;
+
+        if (phoneManager != null)
+            phoneManager.ClosePhone();
+
+        // Hide notification badge during transition.
+        if (notificationBadge != null)
+            notificationBadge.SetActive(false);
+
+        // 1. Fade out to black.
         float elapsed = 0f;
+
         while (elapsed < fadeDuration)
         {
             elapsed += Time.deltaTime;
             fadePanel.alpha = Mathf.Clamp01(elapsed / fadeDuration);
             yield return null;
         }
+
         fadePanel.alpha = 1f;
 
-        // 2. Day 2 Mid-Transition Setup (Pitch Black)
+        // 2. Day 2 Mid-Transition Setup (Pitch Black).
         isDay1 = false;
+
         if (transitionText != null)
         {
             transitionText.text = "The next day..";
@@ -107,39 +156,52 @@ public class SimulationTimeline : MonoBehaviour
 
         if (playerTransform != null && day2SpawnPoint != null)
         {
-            CharacterController cc = playerTransform.GetComponent<CharacterController>();
-            if (cc != null) cc.enabled = false; 
+            CharacterController cc =
+                playerTransform.GetComponent<CharacterController>();
+
+            if (cc != null)
+                cc.enabled = false;
 
             playerTransform.position = day2SpawnPoint.position;
             playerTransform.rotation = day2SpawnPoint.rotation;
 
-            if (cc != null) cc.enabled = true;
+            if (cc != null)
+                cc.enabled = true;
         }
 
-        // 3. Wait in the dark
+        // 3. Wait in the dark.
         yield return new WaitForSeconds(day2BufferTime);
 
-        if (transitionText != null) transitionText.gameObject.SetActive(false);
+        if (transitionText != null)
+            transitionText.gameObject.SetActive(false);
 
-        // 4. Fade back in
+        // 4. Fade back in.
         elapsed = 0f;
+
         while (elapsed < fadeDuration)
         {
             elapsed += Time.deltaTime;
             fadePanel.alpha = 1f - Mathf.Clamp01(elapsed / fadeDuration);
             yield return null;
         }
-        fadePanel.alpha = 0f;
-        
-        // 5. Unfreeze player and play TV News
-        if (playerMovement != null) playerMovement.canMove = true;
-        if (tvBroadcast != null) tvBroadcast.PlayNews();
 
-        // 6. Wait for the broadcast to finish
+        fadePanel.alpha = 0f;
+
+        // 5. Unfreeze player and play TV News.
+        if (playerMovement != null)
+            playerMovement.canMove = true;
+
+        if (tvBroadcast != null)
+            tvBroadcast.PlayNews();
+
+        // 6. Wait for the broadcast to finish.
         yield return new WaitForSeconds(tvBroadcastDuration);
 
-        // 7. Start the disaster
-        if (floodManager != null) floodManager.StartFloodEvent();
-        if (phoneManager != null) phoneManager.EnableBatteryDrain();
+        // 7. Start the disaster.
+        if (floodManager != null)
+            floodManager.StartFloodEvent();
+
+        if (phoneManager != null)
+            phoneManager.EnableBatteryDrain();
     }
 }

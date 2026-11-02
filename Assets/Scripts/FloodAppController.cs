@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class FloodAppController : MonoBehaviour
@@ -12,6 +11,12 @@ public class FloodAppController : MonoBehaviour
     [Header("Earthquake App")]
     public GameObject eqApp;
 
+    [Header("Guide App")]
+    public GameObject guideApp;
+
+    [Header("App Controller")]
+    public PhoneGuideApp phoneGuideApp;
+
     // Open Flood App
     public void OpenFloodApp()
     {
@@ -23,6 +28,9 @@ public class FloodAppController : MonoBehaviour
 
         if (eqApp != null)
             eqApp.SetActive(false);
+
+        if (guideApp != null)
+            guideApp.SetActive(false);
     }
 
     // Close Flood App
@@ -46,6 +54,9 @@ public class FloodAppController : MonoBehaviour
 
         if (eqApp != null)
             eqApp.SetActive(true);
+
+        if (guideApp != null)
+            guideApp.SetActive(false);
     }
 
     // Close Earthquake App
@@ -53,6 +64,39 @@ public class FloodAppController : MonoBehaviour
     {
         if (eqApp != null)
             eqApp.SetActive(false);
+
+        if (homeScreen != null)
+            homeScreen.SetActive(true);
+    }
+
+    // Open Guide App
+    public void OpenGuideApp()
+    {
+        if (homeScreen != null)
+            homeScreen.SetActive(false);
+
+        if (floodApp != null)
+            floodApp.SetActive(false);
+
+        if (eqApp != null)
+            eqApp.SetActive(false);
+
+        if (guideApp != null)
+            guideApp.SetActive(true);
+
+        if (phoneGuideApp != null)
+            phoneGuideApp.OpenGuide();
+    }
+
+    // Close Guide App - HOME BUTTON
+    public void CloseGuideApp()
+    {
+        // Close guide logic and restore gameplay.
+        if (phoneGuideApp != null)
+            phoneGuideApp.CloseGuide();
+
+        if (guideApp != null)
+            guideApp.SetActive(false);
 
         if (homeScreen != null)
             homeScreen.SetActive(true);
