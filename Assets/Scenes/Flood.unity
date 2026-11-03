@@ -243,7 +243,7 @@ GameObject:
   - component: {fileID: 50731098}
   - component: {fileID: 50731097}
   m_Layer: 0
-  m_Name: rain
+  m_Name: Rain
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9753,6 +9753,10 @@ PrefabInstance:
     - target: {fileID: 4581994787166518954, guid: 162626d569e780144ba03556de040561, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6020296470978716235, guid: 162626d569e780144ba03556de040561, type: 3}
+      propertyPath: m_Mass
+      value: 26.59
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -24635,7 +24639,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6293628795912025488, guid: 28ebadc5ff194644199b734be5b07ce2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.5
+      value: -5.34
       objectReference: {fileID: 0}
     - target: {fileID: 6293628795912025488, guid: 28ebadc5ff194644199b734be5b07ce2, type: 3}
       propertyPath: m_LocalPosition.z
@@ -25793,7 +25797,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WaterDeathTrigger
   floodManager: {fileID: 1964577312}
-  timeToDrown: 3
+  timeToDrown: 5.54
 --- !u!54 &1665873372
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -29449,7 +29453,8 @@ MonoBehaviour:
   scheduledMessages:
   - message: 'AUNT:
 
-      Make sure to find a code somewhere to disable the fusebox'
+      Hi, Anak. Make sure to find a code somewhere to disable
+      the fusebox'
     day: 1
     sendAtSeconds: 5
   - message: 'AUNT:
@@ -29457,13 +29462,13 @@ MonoBehaviour:
       If it gets to dark, there''s a flashlight in the Go-Bag
       near the TV.'
     day: 1
-    sendAtSeconds: 10
+    sendAtSeconds: 15
   - message: 'AUNT:
 
       After that bring a ladder scattered around the house and
-      go up high where you can step the ladder. Becareful out there'
+      go up high where you can put the ladder. Becareful out there'
     day: 1
-    sendAtSeconds: 15
+    sendAtSeconds: 25
   phoneManager: {fileID: 2046838624}
   directionalLight: {fileID: 0}
   floodManager: {fileID: 1964577312}
