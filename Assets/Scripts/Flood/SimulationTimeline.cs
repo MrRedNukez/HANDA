@@ -22,6 +22,9 @@ public class SimulationTimeline : MonoBehaviour
     }
 
     [Header("Timeline Settings")]
+    // NEW: turn this off to disable Day 1 Total Duration, Is Day 1 and Relative Message
+    [Tooltip("OFF = skips the Day 1 sequence (storm message, forced phone, Day 2 transition). Scheduled Messages still run.")]
+    public bool useTimelineSettings = true;
     public float day1TotalDuration = 60f;
     public bool isDay1 = true;
     [TextArea(2, 3)]
@@ -36,7 +39,6 @@ public class SimulationTimeline : MonoBehaviour
     public FloodManager floodManager;
     public PlayerMovement playerMovement;
 
-    // NEW: drag the object holding MessageLogApp here
     [Header("Message Log")]
     public MessageLogApp messageLog;
 
@@ -64,7 +66,9 @@ public class SimulationTimeline : MonoBehaviour
 
     private void Start()
     {
-        isDay1 = true;
+        // CHANGED: only force Is Day 1 when the timeline settings are on
+        if (useTimelineSettings)
+            isDay1 = true;
 
         if (fadePanel != null)
             fadePanel.alpha = 0f;
@@ -76,7 +80,11 @@ public class SimulationTimeline : MonoBehaviour
         if (notificationBadge != null)
             notificationBadge.SetActive(false);
 
-        StartCoroutine(Day1Sequence());
+        // CHANGED: the Day 1 sequence only runs when the toggle is on
+        if (useTimelineSettings)
+            StartCoroutine(Day1Sequence());
+
+        // Scheduled messages always run
         StartCoroutine(ScheduledMessageRoutine(MessageDay.Day1));
     }
 
@@ -92,7 +100,6 @@ public class SimulationTimeline : MonoBehaviour
         }
     }
 
-    // NEW: sends a message to the phone popup AND saves it in the message log
     private void DeliverMessage(string text)
     {
         if (phoneManager != null)
@@ -124,13 +131,13 @@ public class SimulationTimeline : MonoBehaviour
                 yield return null;
             }
 
-            // Day 1 messages stop once Day 1 is over
-            if (day == MessageDay.Day1 && !isDay1)
+            // CHANGED: Day 1 messages only stop when the timeline settings are on
+            if (useTimelineSettings && day == MessageDay.Day1 && !isDay1)
                 yield break;
 
             if (!string.IsNullOrEmpty(msg.message))
             {
-                DeliverMessage(msg.message); // CHANGED
+                DeliverMessage(msg.message);
 
                 if (notificationBadge != null &&
                     phoneManager != null &&
@@ -154,7 +161,7 @@ public class SimulationTimeline : MonoBehaviour
         if (phoneManager != null)
         {
             // Receive message.
-            DeliverMessage(relativeMessage); // CHANGED
+            DeliverMessage(relativeMessage);
 
             // Show red notification badge if phone is not already open.
             if (notificationBadge != null &&
